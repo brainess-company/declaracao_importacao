@@ -7,6 +7,31 @@ from .l10n_br_di_declaracao import D2
 
 
 class L10nBrDiValor(models.Model):
+    """
+    Modelo para Gerenciar Valores em Declarações de Importação.
+
+    Este modelo é utilizado para armazenar e gerenciar valores relacionados a adições e deduções
+    em declarações de importação no sistema Odoo. Ele armazena informações sobre os valores
+    em moeda negociada e em moeda da empresa, além das taxas de câmbio associadas.
+
+    Campos:
+        - declaracao_id (Many2one): Referência à declaração de importação associada.
+        - adicao_id (Many2one): Referência à adição associada.
+        - codigo (Integer): Código do valor.
+        - denominacao (Char): Denominação do valor.
+        - moeda_negociada_codigo (Char): Código da moeda negociada.
+        - moeda_negociada_nome (Char): Nome da moeda negociada.
+        - valor_moeda_negociada (Monetary): Valor em moeda negociada.
+        - valor (Monetary): Valor em moeda da empresa.
+        - moeda_negociada_id (Many2one): Referência à moeda negociada.
+        - moeda_empresa_id (Many2one): Referência à moeda da empresa.
+        - moeda_taxa (Float): Taxa de câmbio da moeda negociada para a moeda da empresa.
+
+    Métodos:
+        - _importa_declaracao(acrescimo, deducao): Importa adições e deduções a partir
+          de um objeto de declaração, convertendo valores e calculando taxas de câmbio.
+    """
+        
 
     _name = "l10n_br_di.valor"
     _inherit = "l10n_br_di.mixin"

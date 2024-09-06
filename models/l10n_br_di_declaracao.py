@@ -1,6 +1,52 @@
 # flake8: noqa: B950
 # Copyright 2024 KMEE
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+"""
+Este módulo define o modelo `L10nBrDiDeclaracao`, que representa uma Declaração de Importação (DI) 
+no Odoo, permitindo o gerenciamento de documentos de importação, incluindo dados como mercadorias, 
+despachos, pagamentos, e a geração de faturas relacionadas à importação.
+
+Classes:
+    - L10nBrDiDeclaracao: Modelo Odoo que armazena e manipula informações de uma 
+      Declaração de Importação, incluindo operações fiscais, valores de frete e seguro, 
+      além de adições de mercadorias e documentos de despacho.
+
+Campos:
+    - arquivo_declaracao: Campo binário para armazenar o arquivo XML da declaração.
+    - state: Campo de seleção que define o estado da declaração (rascunho, aberto, bloqueado, cancelado).
+    - fiscal_operation_id: Operação fiscal associada à importação.
+    - company_id: Empresa responsável pela declaração.
+    - currency_id: Moeda utilizada (normalmente BRL).
+    - di_adicao_ids: Linhas de adições de mercadorias relacionadas à DI.
+    - di_despacho_ids: Linhas de despachos relacionados à DI.
+    - di_mercadoria_ids: Mercadorias importadas associadas à DI.
+    - di_pagamento_ids: Informações de pagamento associadas à DI.
+    - numero_di, data_registro, carga_data_chegada, entre outros: Campos diversos para armazenar informações detalhadas da DI.
+
+Métodos:
+    - importa_declaracao: Importa os dados da declaração a partir de um arquivo XML, processa o arquivo 
+      e atualiza os registros no Odoo.
+    - _importa_declaracao: Método auxiliar que processa os dados importados de uma lista de declarações 
+      XML e gera um dicionário de valores para atualizar os campos da DI.
+    - calcular_declaracao: Calcula os valores da declaração com base nas mercadorias adicionadas.
+    - gerar_fatura: Gera uma fatura para a importação, vinculando as mercadorias à fatura gerada.
+    - action_view_invoice: Abre a visualização da fatura gerada para a declaração.
+    - action_view_de_para: Permite a visualização de mapeamentos "de-para" (produto-importação) antes de finalizar a DI.
+
+Detalhamento dos métodos:
+    - importa_declaracao: Recebe o arquivo XML da DI, decodifica, valida e importa os dados estruturados 
+      contidos no arquivo para o sistema Odoo, atualizando ou criando novos registros conforme necessário.
+    - calcular_declaracao: Invoca o cálculo das declarações, processando adições de mercadorias para ajustar 
+      os valores fiscais e de produtos da importação.
+    - gerar_fatura: Valida se há mercadorias associadas à DI e cria uma fatura de fornecedor (entrada) no sistema.
+    - _validate_invoice_fields: Método auxiliar que valida se os campos obrigatórios da fatura estão preenchidos.
+    - _generate_invoice: Método auxiliar que cria efetivamente a fatura no Odoo, vinculando-a à DI.
+
+Uso:
+    Este modelo é utilizado para gerenciar todo o processo de importação no Odoo, incluindo o recebimento 
+    de dados XML das Declarações de Importação, cálculos de valores fiscais e de mercadorias, e geração 
+    de faturas com base nas mercadorias importadas.
+"""
 
 import base64
 from datetime import datetime
