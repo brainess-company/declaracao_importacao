@@ -52,7 +52,6 @@ import base64
 from datetime import datetime
 
 from xsdata.formats.dataclass.parsers import XmlParser
-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tests.common import Form
@@ -310,6 +309,7 @@ class L10nBrDiDeclaracao(models.Model):
             ),
             "numero_di": di.numero_di,
             "data_registro": c_data(di.data_registro),
+            "data_desembaraco": c_data(di.data_desembaraco),
             "carga_data_chegada": c_data(di.carga_data_chegada),
             "armazenamento_recinto_aduaneiro_codigo": di.armazenamento_recinto_aduaneiro_codigo,
             "armazenamento_recinto_aduaneiro_nome": di.armazenamento_recinto_aduaneiro_nome,
@@ -388,7 +388,6 @@ class L10nBrDiDeclaracao(models.Model):
             "via_transporte_nome_transportador": di.via_transporte_nome_transportador,
             "via_transporte_numero_veiculo": di.via_transporte_numero_veiculo,
             "via_transporte_pais_transportador_codigo": di.via_transporte_pais_transportador_codigo,
-            "data_desembaraco": di.data_desembaraco,
         }
         return vals
 
