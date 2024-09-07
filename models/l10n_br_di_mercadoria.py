@@ -60,7 +60,7 @@ from .l10n_br_di_declaracao import D5, D7
 
 class L10nBrDiMercadoria(models.Model):
 
-    _name = "l10n_br_di.mercadoria"
+    _name = "declaracao_importacao.mercadoria"
     _description = "Declaração de Importação Mercadoria"
 
     # @api.depends("product_qty", "price_unit", "currency_rate", "import_addition_id")
@@ -93,7 +93,7 @@ class L10nBrDiMercadoria(models.Model):
             line.amount_total = line.final_price_unit * line.quantidade
 
     declaracao_id = fields.Many2one(
-        "l10n_br_di.declaracao",
+        "declaracao_importacao.declaracao",
         related="adicao_id.declaracao_id",
     )
 
@@ -103,7 +103,7 @@ class L10nBrDiMercadoria(models.Model):
     )
 
     adicao_id = fields.Many2one(
-        "l10n_br_di.adicao", string="Adição", required=True, ondelete="cascade"
+        "declaracao_importacao.adicao", string="Adição", required=True, ondelete="cascade"
     )
 
     moeda_venda_id = fields.Many2one(

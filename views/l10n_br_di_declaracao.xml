@@ -335,7 +335,7 @@
 
     <record model="ir.ui.menu" id="l10n_br_di_declaracoes_menu">
         <field name="name">Declarações</field>
-        <!-- a referencia abaixo estaquebrando o codigo -->
+        <!-- akkk referencia abaixo estaquebrando o codigo -->
         <field name="parent_id" ref="declaracao_importacao.l10n_br_di_declaracao_menu" />
         <field name="action" ref="l10n_br_di_declaracao_act_window" />
         <field name="sequence" eval="991" />

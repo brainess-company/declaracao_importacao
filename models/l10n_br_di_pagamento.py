@@ -46,11 +46,11 @@ from .l10n_br_di_declaracao import D2, c_data
 
 class L10nBrDiPagamento(models.Model):
 
-    _name = "l10n_br_di.pagamento"
+    _name = "declaracao_importacao.pagamento"
     _description = "Declaração Importação Pagamento"
 
     declaracao_id = fields.Many2one(
-        "l10n_br_di.declaracao", string="Declaração", required=True, ondelete="cascade"
+        "declaracao_importacao.declaracao", string="Declaração", required=True, ondelete="cascade"
     )
 
     currency_id = fields.Many2one(

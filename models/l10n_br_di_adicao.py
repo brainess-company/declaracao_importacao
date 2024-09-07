@@ -9,8 +9,8 @@ from .l10n_br_di_declaracao import D2
 
 class L10nBrDiAdicao(models.Model):
 
-    _name = "l10n_br_di.adicao"
-    _inherit = "l10n_br_di.mixin"
+    _name = "declaracao_importacao.adicao"
+    _inherit = "declaracao_importacao.mixin"
     _description = "Declaração Importação Adição"
 
     _rec_name = "numero_adicao"
@@ -29,11 +29,11 @@ class L10nBrDiAdicao(models.Model):
                 )
 
     declaracao_id = fields.Many2one(
-        "l10n_br_di.declaracao", string="Declaração", required=True, ondelete="cascade"
+        "declaracao_importacao.declaracao", string="Declaração", required=True, ondelete="cascade"
     )
 
-    di_adicao_mercadoria_ids = fields.One2many("l10n_br_di.mercadoria", "adicao_id")
-    di_adicao_valor_ids = fields.One2many("l10n_br_di.valor", "adicao_id")
+    di_adicao_mercadoria_ids = fields.One2many("declaracao_importacao.mercadoria", "adicao_id")
+    di_adicao_valor_ids = fields.One2many("declaracao_importacao.valor", "adicao_id")
 
     cide_valor_aliquota_especifica = fields.Monetary(currency_field="currency_id")
     cide_valor_devido = fields.Monetary(currency_field="currency_id")

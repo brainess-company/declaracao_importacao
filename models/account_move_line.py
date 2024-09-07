@@ -9,5 +9,5 @@ class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
     di_mercadoria_ids = fields.Many2many(
-        comodel_name="l10n_br_di.mercadoria",
+        comodel_name="declaracao_importacao.mercadoria",  # l10n_br_di
     )

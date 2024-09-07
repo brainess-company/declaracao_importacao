@@ -2,7 +2,7 @@
 <odoo>
 
     <record id="l10n_br_di_res_company_form" model="ir.ui.view">
-        <field name="name">l10n_br_di.res.company.form</field>
+        <field name="name">declaracao_importacao.res.company.form</field>
         <field name="model">res.company</field>
         <field name="inherit_id" ref="l10n_br_fiscal.fiscal_res_company_form" />
         <field name="arch" type="xml">

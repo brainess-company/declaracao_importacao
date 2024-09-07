@@ -34,11 +34,11 @@ from odoo import fields, models
 
 class L10nBrDespacho(models.Model):
 
-    _name = "l10n_br_di.despacho"
+    _name = "declaracao_importacao.despacho"
     _description = "Declaração de Importação Despacho"
 
     declaracao_id = fields.Many2one(
-        "l10n_br_di.declaracao", string="Declaração", required=True, ondelete="cascade"
+        "declaracao_importacao.declaracao", string="Declaração", required=True, ondelete="cascade"
     )
 
     codigo_tipo_documento_despacho = fields.Char()

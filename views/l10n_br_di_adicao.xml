@@ -4,7 +4,7 @@
 <odoo>
 
     <record model="ir.ui.view" id="l10n_br_di_adicao_form_view">
-        <field name="model">l10n_br_di.adicao</field>
+        <field name="model">declaracao_importacao.adicao</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -256,7 +256,7 @@
     </record>
 
     <record model="ir.ui.view" id="l10n_br_di_adicao_tree_view">
-        <field name="model">l10n_br_di.adicao</field>
+        <field name="model">declaracao_importacao.adicao</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="declaracao_id" />

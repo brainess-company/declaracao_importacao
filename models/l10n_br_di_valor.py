@@ -33,17 +33,17 @@ class L10nBrDiValor(models.Model):
     """
         
 
-    _name = "l10n_br_di.valor"
-    _inherit = "l10n_br_di.mixin"
+    _name = "declaracao_importacao.valor"
+    _inherit = "declaracao_importacao.mixin"
     _description = "Declaração Importação Valores"
 
     declaracao_id = fields.Many2one(
-        "l10n_br_di.declaracao",
+        "declaracao_importacao.declaracao",
         related="adicao_id.declaracao_id",
     )
 
     adicao_id = fields.Many2one(
-        "l10n_br_di.adicao", string="Adição", required=True, ondelete="cascade"
+        "declaracao_importacao.adicao", string="Adição", required=True, ondelete="cascade"
     )
 
     codigo = fields.Integer()

@@ -6,7 +6,7 @@ from odoo import fields, models
 
 class L10nBrImportaDiWizard(models.TransientModel):
 
-    _name = "l10n_br_di.importa_di.wizard"
+    _name = "declaracao_importacao.importa_di.wizard"
     _description = "Wizard de Importação de Declaração Importação"
 
     arquivo_declaracao = fields.Binary()
@@ -15,10 +15,10 @@ class L10nBrImportaDiWizard(models.TransientModel):
         result_ids = []
 
         for wizard in self:
-            declaration = self.env["l10n_br_di.declaracao"].importa_declaracao(
+            declaration = self.env["declaracao_importacao.declaracao"].importa_declaracao(
                 wizard.arquivo_declaracao
             )
             result_ids.append(declaration.id)
-        action = self.env.ref("l10n_br_di.l10n_br_di_declaracao_act_window").read([])[0]
+        action = self.env.ref("declaracao_importacao.l10n_br_di_declaracao_act_window").read([])[0]
         action["domain"] = [("id", "in", result_ids)]
         return action

@@ -4,7 +4,7 @@
 <odoo>
 
     <record model="ir.ui.view" id="l10n_br_di_mercadoria_tree_view">
-        <field name="model">l10n_br_di.mercadoria</field>
+        <field name="model">declaracao_importacao.mercadoria</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="declaracao_id" invisible="1" />
@@ -31,7 +31,7 @@
     </record>
 
     <record model="ir.ui.view" id="l10n_br_di_mercadoria_tree_de_para_view">
-        <field name="model">l10n_br_di.mercadoria</field>
+        <field name="model">declaracao_importacao.mercadoria</field>
         <field name="arch" type="xml">
             <tree
                 editable="bottom"
@@ -50,7 +50,7 @@
 
     <record model="ir.actions.act_window" id="l10n_br_di_mercadoria_de_para_act_window">
         <field name="name">De Para</field>
-        <field name="res_model">l10n_br_di.mercadoria</field>
+        <field name="res_model">declaracao_importacao.mercadoria</field>
         <field name="view_mode">tree</field>
         <field name="domain">[]</field>
         <field name="context">{}</field>

@@ -72,9 +72,9 @@ def c_data(data):
 
 class L10nBrDiDeclaracao(models.Model):
 
-    _name = "l10n_br_di.declaracao"
+    _name = "declaracao_importacao.declaracao"
     _description = "Declaração Importação"
-    _inherit = ["mail.thread", "mail.activity.mixin", "l10n_br_di.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "declaracao_importacao.mixin"]
 
     _rec_name = "numero_di"
 
@@ -146,11 +146,11 @@ class L10nBrDiDeclaracao(models.Model):
 
     # Relacionais XML
 
-    di_adicao_ids = fields.One2many("l10n_br_di.adicao", "declaracao_id")
-    di_despacho_ids = fields.One2many("l10n_br_di.despacho", "declaracao_id")
-    di_mercadoria_ids = fields.One2many("l10n_br_di.mercadoria", "declaracao_id")
-    di_pagamento_ids = fields.One2many("l10n_br_di.pagamento", "declaracao_id")
-    di_valor_ids = fields.One2many("l10n_br_di.valor", "declaracao_id")
+    di_adicao_ids = fields.One2many("declaracao_importacao.adicao", "declaracao_id")
+    di_despacho_ids = fields.One2many("declaracao_importacao.despacho", "declaracao_id")
+    di_mercadoria_ids = fields.One2many("declaracao_importacao.mercadoria", "declaracao_id")
+    di_pagamento_ids = fields.One2many("declaracao_importacao.pagamento", "declaracao_id")
+    di_valor_ids = fields.One2many("declaracao_importacao.valor", "declaracao_id")
 
     # Campos do arquivo XML
 
@@ -456,13 +456,13 @@ class L10nBrDiDeclaracao(models.Model):
             return
 
         action = (
-            self.env.ref("l10n_br_di.l10n_br_di_mercadoria_de_para_act_window")
+            self.env.ref("declaracao_importacao.l10n_br_di_mercadoria_de_para_act_window")
             .sudo()
             .read([])[0]
         )
         tree_view = [
             (
-                self.env.ref("l10n_br_di.l10n_br_di_mercadoria_tree_de_para_view").id,
+                self.env.ref("declaracao_importacao.l10n_br_di_mercadoria_tree_de_para_view").id,
                 "tree",
             )
         ]

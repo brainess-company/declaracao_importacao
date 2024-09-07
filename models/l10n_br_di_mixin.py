@@ -28,7 +28,7 @@ from odoo import models
 
 class L10nBrDiMixin(models.AbstractModel):
 
-    _name = "l10n_br_di.mixin"
+    _name = "declaracao_importacao.mixin"
     _description = "Declaração Importação Mixin"
 
     def _s_currency(self, siscomex_code):

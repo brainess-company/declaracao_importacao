@@ -4,7 +4,7 @@
 <odoo>
 
     <record model="ir.ui.view" id="l10n_br_di_pagamento_tree_view">
-        <field name="model">l10n_br_di.pagamento</field>
+        <field name="model">declaracao_importacao.pagamento</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="declaracao_id" invisible="1" />
