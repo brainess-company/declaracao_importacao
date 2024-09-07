@@ -78,7 +78,7 @@ class L10nBrDiPagamento(models.Model):
             "codigo_receita": pagamento.codigo_receita,
             "codigo_tipo_pagamento": pagamento.codigo_tipo_pagamento,
             "conta_pagamento": pagamento.conta_pagamento,
-            "data_desembaraco": c_data(pagamento.data_desembaraco),
+            "data_pagamento": c_data(pagamento.data_pagamento),
             "nome_tipo_pagamento": pagamento.nome_tipo_pagamento,
             "numero_retificacao": pagamento.numero_retificacao,
             "valor_juros_encargos": int(pagamento.valor_juros_encargos) / D2,
