@@ -1495,6 +1495,16 @@ class DeclaracaoImportacao:
             "type": "Element",
             "required": True,
         },
+    
+    )
+    data_desembaraco: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "dataDesembaraco",
+            "type": "Element",
+            "required": True,
+        },
+    
     )
     conhecimento_carga_embarque_local: Optional[str] = field(
         default=None,
