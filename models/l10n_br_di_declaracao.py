@@ -407,6 +407,9 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("One or more import lines is missing a product ID."))
 
     def _generate_invoice(self):
+        """
+        gera a fatura de fato
+        """
         move_form = Form(
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",

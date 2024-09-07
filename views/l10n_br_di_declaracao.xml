@@ -4,7 +4,7 @@
 <odoo>
 
     <record model="ir.ui.view" id="l10n_br_di_declaracao_form_view">
-        <field name="model">l10n_br_di.declaracao</field>
+        <field name="model">declaracao_importacao.declaracao</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -295,7 +295,7 @@
     </record>
 
     <record model="ir.ui.view" id="l10n_br_di_declaracao_search_view">
-        <field name="model">l10n_br_di.declaracao</field>
+        <field name="model">declaracao_importacao.declaracao</field>
         <field name="arch" type="xml">
             <search>
                 <field name="numero_di" />
@@ -307,7 +307,7 @@
     </record>
 
     <record model="ir.ui.view" id="l10n_br_di_declaracao_tree_view">
-        <field name="model">l10n_br_di.declaracao</field>
+        <field name="model">declaracao_importacao.declaracao</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="data_registro" />
@@ -321,7 +321,7 @@
 
     <record model="ir.actions.act_window" id="l10n_br_di_declaracao_act_window">
         <field name="name">Declaração de Importação</field>
-        <field name="res_model">l10n_br_di.declaracao</field>
+        <field name="res_model">declaracao_importacao.declaracao</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[]</field>
         <field name="context">{}</field>
@@ -335,7 +335,8 @@
 
     <record model="ir.ui.menu" id="l10n_br_di_declaracoes_menu">
         <field name="name">Declarações</field>
-        <field name="parent_id" ref="l10n_br_di.l10n_br_di_declaracao_menu" />
+        <!-- a referencia abaixo estaquebrando o codigo -->
+        <field name="parent_id" ref="declaracao_importacao.l10n_br_di_declaracao_menu" />
         <field name="action" ref="l10n_br_di_declaracao_act_window" />
         <field name="sequence" eval="991" />
     </record>
