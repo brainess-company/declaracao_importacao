@@ -388,7 +388,7 @@ class L10nBrDiDeclaracao(models.Model):
             "via_transporte_nome_transportador": di.via_transporte_nome_transportador,
             "via_transporte_numero_veiculo": di.via_transporte_numero_veiculo,
             "via_transporte_pais_transportador_codigo": di.via_transporte_pais_transportador_codigo,
-            "data_esembaraco": di.data_desembaraco,
+            "data_desembaraco": di.data_desembaraco,
         }
         return vals
 
