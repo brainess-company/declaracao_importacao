@@ -187,6 +187,8 @@ class L10nBrDiDeclaracao(models.Model):
     documento_chegada_carga_nome = fields.Char()
     documento_chegada_carga_numero = fields.Char()
 
+    data_desembaraco = fields.Date()
+
     frete_collect = fields.Float()
     frete_em_territorio_nacional = fields.Monetary(currency_field="dolar_currency_id")
     frete_moeda_negociada_codigo = fields.Char()
@@ -386,6 +388,7 @@ class L10nBrDiDeclaracao(models.Model):
             "via_transporte_nome_transportador": di.via_transporte_nome_transportador,
             "via_transporte_numero_veiculo": di.via_transporte_numero_veiculo,
             "via_transporte_pais_transportador_codigo": di.via_transporte_pais_transportador_codigo,
+            "data_esembaraco": di.data_desembaraco,
         }
         return vals
 
