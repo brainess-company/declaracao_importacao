@@ -427,8 +427,11 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
+        move_form.account_freight_value = self.frete_total_reais
+        #  frete_total_reais
 
         for mercadoria in self.di_mercadoria_ids:
+            # todo: uhj
             with move_form.invoice_line_ids.new() as line_form:
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
