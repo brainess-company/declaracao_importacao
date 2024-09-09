@@ -420,6 +420,7 @@ class L10nBrDiDeclaracao(models.Model):
                 account_predictive_bills_disable_prediction=True,
             )
         )
+        _logger.info('Move form: %s', move_form)
         move_form.invoice_date = fields.Date.today()
         move_form.date = move_form.invoice_date
 
