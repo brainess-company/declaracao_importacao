@@ -427,7 +427,7 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
-        move_form.account_freight_value = self.frete_total_reais
+        # move_form.account_freight_value = self.frete_total_reais
         #  frete_total_reais
 
         for mercadoria in self.di_mercadoria_ids:
