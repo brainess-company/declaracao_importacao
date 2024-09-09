@@ -422,7 +422,9 @@ class L10nBrDiDeclaracao(models.Model):
         )
         _logger.info('Move form: %s', move_form)
         move_form.invoice_date = fields.Date.today()
+        _logger.info('Move form: %s', move_form)
         move_form.date = move_form.invoice_date
+        _logger.info('Move form: %s', move_form)
 
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
 
@@ -445,6 +447,8 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.di_mercadoria_ids.add(mercadoria)
 
         invoice = move_form.save()
+        _logger.info('Invoice: %s', invoice)
+        _logger.info('Move form: %s', move_form)
 
         # Atualização do estado e referência à fatura gerada
         self.write({"account_move_id": invoice.id, "state": "locked"})
