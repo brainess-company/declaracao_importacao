@@ -57,6 +57,8 @@ from odoo.exceptions import UserError
 from odoo.tests.common import Form
 
 from ..utils.lista_declaracoes import ListaDeclaracoes
+import logging
+_logger = logging.getLogger(__name__)
 
 D7 = 10**7
 D5 = 10**5
@@ -427,8 +429,13 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
+
+        _logger.info('Valor de frete_total_reais antes da atribuição: %s', self.frete_total_reais)
+        _logger.info('Valor de amount_freight_value antes da atribuição: %s', move_form.amount_freight_value)
         move_form.amount_freight_value = self.frete_total_reais
         #  frete_total_reais
+        # Logs após a atribuição
+        _logger.info('Valor de amount_freight_value após a atribuição: %s', move_form.amount_freight_value)
 
         for mercadoria in self.di_mercadoria_ids:
             # todo: uhj
