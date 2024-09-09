@@ -412,7 +412,7 @@ class L10nBrDiDeclaracao(models.Model):
 
     def _generate_invoice(self):
         """
-        gera a fatura de fato
+        Gera a fatura de fato
         """
         move_form = Form(
             self.env["account.move"].with_context(
@@ -430,15 +430,12 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
 
+        # Atribuição do frete
         _logger.info('Valor de frete_total_reais antes da atribuição: %s', self.frete_total_reais)
-        _logger.info('Valor de amount_freight_value antes da atribuição: %s', move_form.amount_freight_value)
         move_form.amount_freight_value = self.frete_total_reais
-        #  frete_total_reais
-        # Logs após a atribuição
         _logger.info('Valor de amount_freight_value após a atribuição: %s', move_form.amount_freight_value)
 
         for mercadoria in self.di_mercadoria_ids:
-            # todo: uhj
             with move_form.invoice_line_ids.new() as line_form:
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
@@ -447,8 +444,11 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.di_mercadoria_ids.add(mercadoria)
 
         invoice = move_form.save()
+
+        # Atualização do estado e referência à fatura gerada
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
+        # Exibição da fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read([])[0]
         action["domain"] = [("id", "=", invoice.id)]
         return action
