@@ -391,6 +391,7 @@ class L10nBrDiDeclaracao(models.Model):
             "via_transporte_numero_veiculo": di.via_transporte_numero_veiculo,
             "via_transporte_pais_transportador_codigo": di.via_transporte_pais_transportador_codigo,
         }
+        _logger.info('Vals declaracao: %s', vals)
         return vals
 
     def calcular_declaracao(self):
@@ -411,28 +412,19 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("One or more import lines is missing a product ID."))
 
     def _generate_invoice(self):
-        """
-        Gera a fatura de fato
-        """
         move_form = Form(
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",
                 account_predictive_bills_disable_prediction=True,
             )
         )
-        _logger.info('Move form: %s', move_form)
         move_form.invoice_date = fields.Date.today()
-        _logger.info('Move form: %s', move_form)
         move_form.date = move_form.invoice_date
-        _logger.info('Move form: %s', move_form)
-
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
-
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
-
         # Atribuição do frete
         _logger.info('Valor de frete_total_reais antes da atribuição: %s', self.frete_total_reais)
         move_form.amount_freight_value = self.frete_total_reais
@@ -447,8 +439,6 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.di_mercadoria_ids.add(mercadoria)
 
         invoice = move_form.save()
-        _logger.info('Invoice: %s', invoice)
-        _logger.info('Move form: %s', move_form)
 
         # Atualização do estado e referência à fatura gerada
         self.write({"account_move_id": invoice.id, "state": "locked"})

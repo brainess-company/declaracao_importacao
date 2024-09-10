@@ -3,6 +3,8 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models
+import logging
+_logger = logging.getLogger(__name__)
 
 from .l10n_br_di_declaracao import D2
 
@@ -371,6 +373,7 @@ class L10nBrDiAdicao(models.Model):
             / D2,
             "vinculo_comprador_vendedor": adicao.vinculo_comprador_vendedor,
         }
+        _logger.info('Vals adicaoo: %s', vals)
 
         if adicao.fabricante_nome:
 
