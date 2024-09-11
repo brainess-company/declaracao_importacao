@@ -201,6 +201,19 @@ class L10nBrDiDeclaracao(models.Model):
 
     icms = fields.Char()
 
+    agencia_icms = fields.Char()
+    banco_icms = fields.Char()
+    codigo_tipo_recolhimento_icms = fields.Char()
+    cpf_responsavel_registro = fields.Char()
+    data_pagamento_icms = fields.Char()
+    data_registro_icms = fields.Char()
+    hora_registro_icms = fields.Char()
+    nome_tipo_recolhimento_icms = fields.Char()
+    numero_sequencial_icms = fields.Char()
+    uf_icms = fields.Char()
+    valor_total_icms = fields.Char()
+
+
     importador_codigo_tipo = fields.Char()
     importador_cpf_representante_legal = fields.Char()
     importador_endereco_bairro = fields.Char()
