@@ -1,0 +1,38 @@
+Provavelmente não colocaram no oca pq é pra resolver necessidade especificas deles
+
+
+select fiscal_document_line_id from account_move_line
+select fiscal_document_id from account_move
+
+l10n_br_fiscal_document 
+l10n_br_fiscal_document_line
+
+account_move  ----  l10n_br_fiscal_document
+account_move_line  ---- l10n_br_fiscal_document_line
+
+campo IMPOSTOS FISCAIS
+provavelmente quando está criando fatura o sistema está pegando taxas pré configuradas ao invés da do xml
+deve ser o campo fiscal_tax_ids da tabela(relação) l10_br_fiscal.tax
+
+
+parece que os campos que eu tenho q preencher são os invoice_line_ids do objeto acount_move da relação account_move_line
+por exemplo, no invoice_line_ids (linhas de fatura da declaração) aparece uma furadeira, e na tabela
+account move line n tem o cfop da furadeira mas na linha da fatura aparece, provavelmente está pegando 
+valores da relação fiscal document_line_id
+select icms_value from l10n_br_fiscal_document_line where id = '11' o icms_value está zerado 
+
+
+na aba valores no modulo o valor q é 4 mil o leandro colocou 3500
+
+falta tratar o icms do xml
+
+eu vou ter q sobrescrever metodos crete e whrite para 
+l10n_br_fiscal_document 
+l10n_br_fiscal_document_line
+
+e provavelmente l10n_br_fiscal
+
+
+account_move_line 
+-- l10n_br_fiscal_document_line
+----(freight_value, )
