@@ -1689,7 +1689,7 @@ class DeclaracaoImportacao:
     )
 
     @dataclass
-    class Embalagem:
+    class Icms:
         class Meta:
             name = "icms"
 

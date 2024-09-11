@@ -360,6 +360,7 @@ class L10nBrDiDeclaracao(models.Model):
             "frete_total_moeda": int(di.frete_total_moeda) / D2,
             "frete_total_reais": int(di.frete_total_reais) / D2,
             "icms": di.icms,
+
             
             "agencia_icms": di.agencia_icms,
             "banco_icms": di.banco_icms,
