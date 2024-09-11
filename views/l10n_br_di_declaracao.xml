@@ -244,6 +244,21 @@
                                     <field name="seguro_total_moeda_negociada" />
                                     <field name="seguro_total_reais" />
                                 </group>
+                                <!-- ICMS --> 
+                                <group name="icms" string="Icms">
+                                    <field name="agencia_icms" />
+                                    <field name="banco_icms" />
+                                    <field name="codigo_tipo_recolhimento_icms" />
+                                    <field name="cpf_responsavel_registro" />
+                                    <field name="data_pagamento_icms" />
+                                    <field name="data_registro_icms" />
+                                    <field name="hora_registro_icms" />
+                                    <field name="nome_tipo_recolhimento_icms" />
+                                    <field name="numero_sequencial_icms" />
+                                    <field name="uf_icms" />
+                                    <field name="valor_total_icms" />
+                                </group>
+                                <!-- ICMS --> 
 
                                 <group name="totais_outros" string="Outros">
                                     <field name="icms" />
