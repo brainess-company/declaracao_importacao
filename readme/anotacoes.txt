@@ -40,4 +40,6 @@ account_move_line
 
 eu tenho q criar o campo no untils e depois instanciar ele no l10n_br_di_declaracao
 ele vai ficar no objeto: O campo "agencia_icms" não existe no modelo "declaracao_importacao.declaracao"
+e tenho q incluir ele na lista de valores da def importa_declaracao
+
 
