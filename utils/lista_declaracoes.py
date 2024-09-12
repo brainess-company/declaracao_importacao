@@ -1362,94 +1362,94 @@ class Icms:
     class Meta:
         name = "icms"
 
-        agencia_icms: Optional[int] = field(
-            default=None,
-            metadata={
+    agencia_icms: Optional[int] = field(
+        default=None,
+        metadata={
                 "name": "agenciaIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        banco_icms: Optional[str] = field(
+    )
+    banco_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "bancoIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        codigo_tipo_recolhimento_icms: Optional[str] = field(
+    )
+    codigo_tipo_recolhimento_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "codigoTipoRecolhimentoIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        cpf_responsavel_registro: Optional[str] = field(
+    )
+    cpf_responsavel_registro: Optional[str] = field(
             default=None,
             metadata={
                 "name": "cpfResponsavelRegistro",
                 "type": "Element",
                 "required": True,
             },
-        )
-        data_pagamento_icms: Optional[str] = field(
+    )
+    data_pagamento_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "dataPagamentoIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        data_registro_icms: Optional[str] = field(
+    )
+    data_registro_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "dataRegistro",
                 "type": "Element",
                 "required": True,
             },
-        )
-        hora_registro_icms: Optional[str] = field(
+    )
+    hora_registro_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "horaRegistro",
                 "type": "Element",
                 "required": True,
             },
-        )
-        nome_tipo_recolhimento_icms: Optional[str] = field(
+    )
+    nome_tipo_recolhimento_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "nomeTipoRecolhimentoIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        numero_sequencial_icms: Optional[str] = field(
+    )
+    numero_sequencial_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "numeroSequencialIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        uf_icms: Optional[str] = field(
+    )
+    uf_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "ufIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
-        valor_total_icms: Optional[str] = field(
+    )
+    valor_total_icms: Optional[str] = field(
             default=None,
             metadata={
                 "name": "valorTotalIcms",
                 "type": "Element",
                 "required": True,
             },
-        )
+    )
 
 
 

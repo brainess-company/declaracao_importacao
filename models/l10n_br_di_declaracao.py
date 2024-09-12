@@ -71,23 +71,19 @@ def c_data(data):
     return datetime.strptime(str(data), "%Y%m%d").date()
 
 
-def process_icms_data(self, xml_data):
-    # Acessar a estrutura pai "icms" no XML
-    icms_data = xml_data.get('icms')
-
+def process_icms_data(self, icms_data):
     if icms_data:
-        # Atribuir os campos ICMS a partir da estrutura pai "icms"
-        self.agencia_icms = icms_data.get('agenciaIcms')
-        self.banco_icms = icms_data.get('bancoIcms')
-        self.codigo_tipo_recolhimento_icms = icms_data.get('codigoTipoRecolhimentoIcms')
-        self.cpf_responsavel_registro = icms_data.get('cpfResponsavelRegistro')
-        self.data_pagamento_icms = icms_data.get('dataPagamentoIcms')
-        self.data_registro_icms = icms_data.get('dataRegistro')
-        self.hora_registro_icms = icms_data.get('horaRegistro')
-        self.nome_tipo_recolhimento_icms = icms_data.get('nomeTipoRecolhimentoIcms')
-        self.numero_sequencial_icms = icms_data.get('numeroSequencialIcms')
-        self.uf_icms = icms_data.get('ufIcms')
-        self.valor_total_icms = icms_data.get('valorTotalIcms')
+        self.agencia_icms = icms_data.agencia_icms
+        self.banco_icms = icms_data.banco_icms
+        self.codigo_tipo_recolhimento_icms = icms_data.codigo_tipo_recolhimento_icms
+        self.cpf_responsavel_registro = icms_data.cpf_responsavel_registro
+        self.data_pagamento_icms = icms_data.data_pagamento_icms
+        self.data_registro_icms = icms_data.data_registro
+        self.hora_registro_icms = icms_data.hora_registro
+        self.nome_tipo_recolhimento_icms = icms_data.nome_tipo_recolhimento_icms
+        self.numero_sequencial_icms = icms_data.numero_sequencial_icms
+        self.uf_icms = icms_data.uf_icms
+        self.valor_total_icms = icms_data.valor_total_icms
     else:
         _logger.warning("Nenhum dado de ICMS encontrado no XML")
 
