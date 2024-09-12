@@ -478,23 +478,28 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
-        move_form.amount_freight_value = self.frete_total_reais  # Frete sendo adicionado à fatura
+        move_form.amount_freight_value = self.frete_total_reais  # Adicionando frete à fatura
 
-        for mercadoria in self.di_mercadoria_ids:
-            with move_form.invoice_line_ids.new() as line_form:
-                line_form.product_id = mercadoria.product_id
-                line_form.quantity = mercadoria.quantidade
-                line_form.price_unit = mercadoria.final_price_unit
-                line_form.pis_value = mercadoria.pis_valor  # Adicionando o valor do PIS
-                line_form.cofins_value = mercadoria.cofins_valor  # Adicionando o valor do COFINS
-                line_form.ii_value = mercadoria.ii_valor  # Adicionando o valor do Imposto de Importação
-                line_form.ipi_value = mercadoria.ipi_valor  # Adicionando o valor do IPI
-                line_form.freight_value = mercadoria.frete_valor  # Adicionando o valor do frete
+        for adicao in self.di_adicao_ids:
+            for mercadoria in adicao.di_adicao_mercadoria_ids:
+                with move_form.invoice_line_ids.new() as line_form:
+                    line_form.product_id = mercadoria.product_id
+                    line_form.quantity = mercadoria.quantidade
+                    line_form.price_unit = mercadoria.final_price_unit
+
+                    # Adicionando valores de impostos e taxas
+                    line_form.pis_value = adicao.pis_pasep_aliquota_valor_devido
+                    line_form.cofins_value = adicao.cofins_aliquota_valor_devido
+                    line_form.ii_value = adicao.ii_aliquota_valor_devido
+                    line_form.ipi_value = adicao.ipi_aliquota_valor_devido
+                    line_form.freight_value = adicao.frete_valor_reais
 
         invoice = move_form.save()
 
+        # Atualizando o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
+        # Retornando a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read([])[0]
         action["domain"] = [("id", "=", invoice.id)]
         return action

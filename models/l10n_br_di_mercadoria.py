@@ -162,12 +162,6 @@ class L10nBrDiMercadoria(models.Model):
 
     amount_afrmm = fields.Monetary(string="vAFRMM")
 
-    # Campos já existentes...
-    pis_valor = fields.Monetary(string="PIS Valor", currency_field="currency_id")
-    cofins_valor = fields.Monetary(string="COFINS Valor", currency_field="currency_id")
-    ii_valor = fields.Monetary(string="II Valor", currency_field="currency_id")  # Imposto de Importação
-    ipi_valor = fields.Monetary(string="IPI Valor", currency_field="currency_id")
-    frete_valor = fields.Monetary(string="Frete", currency_field="currency_id")
 
     def _importa_declaracao(self, mercadoria):
         vals = {
@@ -176,11 +170,7 @@ class L10nBrDiMercadoria(models.Model):
             "quantidade": int(mercadoria.quantidade) / D5,
             "unidade_medida": mercadoria.unidade_medida,
             "valor_unitario": int(mercadoria.valor_unitario) / D7,
-            "pis_valor": int(mercadoria.pis_valor) / D7,  # Certifique-se de que 'pis_valor' é o campo correto no XML
-            "cofins_valor": int(mercadoria.cofins_valor) / D7,
-            "ii_valor": int(mercadoria.ii_valor) / D7,
-            "ipi_valor": int(mercadoria.ipi_valor) / D7,
-            "frete_valor": int(mercadoria.frete_valor) / D7,
+
         }
         self._match_product_unit(
             vals,
@@ -189,5 +179,5 @@ class L10nBrDiMercadoria(models.Model):
         )
         return vals
     
-    
+
         # TODO: Implementar a busca do produto
