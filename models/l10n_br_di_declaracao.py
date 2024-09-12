@@ -395,7 +395,7 @@ class L10nBrDiDeclaracao(models.Model):
             "hora_registro_icms": di.icms.hora_registro_icms,
             "nome_tipo_recolhimento_icms": di.icms.nome_tipo_recolhimento_icms,
             "numero_sequencial_icms":di.icms.numero_sequencial_icms,
-            "uf_icms": di.uf_icms,
+            "uf_icms": di.icms.uf_icms,
             "valor_total_icms": di.icms.valor_total_icms,
 
             "importador_codigo_tipo": di.importador_codigo_tipo,
