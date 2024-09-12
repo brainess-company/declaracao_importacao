@@ -386,8 +386,8 @@ class L10nBrDiDeclaracao(models.Model):
             "icms": di.icms,
 
             
-            "agencia_icms": di.agencia_icms,
-            "banco_icms": di.banco_icms,
+            "agencia_icms": di.icms.agencia_icms, 
+            "banco_icms": di.icms.banco_icms,
             "codigo_tipo_recolhimento_icms": di.codigo_tipo_recolhimento_icms,
             "cpf_responsavel_registro": di.cpf_responsavel_registro,
             "data_pagamento_icms": di.data_pagamento_icms,
