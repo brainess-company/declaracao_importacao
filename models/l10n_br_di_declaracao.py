@@ -71,6 +71,21 @@ def c_data(data):
     return datetime.strptime(str(data), "%Y%m%d").date()
 
 
+def process_icms_data(self, xml_data):
+    # Exemplo de atribuição dos campos ICMS a partir do XML
+    self.agencia_icms = xml_data.get('agenciaIcms')
+    self.banco_icms = xml_data.get('bancoIcms')
+    self.codigo_tipo_recolhimento_icms = xml_data.get('codigoTipoRecolhimentoIcms')
+    self.cpf_responsavel_registro = xml_data.get('cpfResponsavelRegistro')
+    self.data_pagamento_icms = xml_data.get('dataPagamentoIcms')
+    self.data_registro_icms = xml_data.get('dataRegistro')
+    self.hora_registro_icms = xml_data.get('horaRegistro')
+    self.nome_tipo_recolhimento_icms = xml_data.get('nomeTipoRecolhimentoIcms')
+    self.numero_sequencial_icms = xml_data.get('numeroSequencialIcms')
+    self.uf_icms = xml_data.get('ufIcms')
+    self.valor_total_icms = xml_data.get('valorTotalIcms')
+
+
 class L10nBrDiDeclaracao(models.Model):
 
     _name = "declaracao_importacao.declaracao"
@@ -466,6 +481,9 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.di_mercadoria_ids.add(mercadoria)
 
         invoice = move_form.save()
+
+        # Chamar a função para processar os dados ICMS do XML
+        self.process_icms_data(invoice)
 
         # Atualização do estado e referência à fatura gerada
         self.write({"account_move_id": invoice.id, "state": "locked"})
