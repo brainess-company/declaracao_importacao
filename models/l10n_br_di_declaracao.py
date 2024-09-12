@@ -72,18 +72,25 @@ def c_data(data):
 
 
 def process_icms_data(self, xml_data):
-    # Exemplo de atribuição dos campos ICMS a partir do XML
-    self.agencia_icms = xml_data.get('agenciaIcms')
-    self.banco_icms = xml_data.get('bancoIcms')
-    self.codigo_tipo_recolhimento_icms = xml_data.get('codigoTipoRecolhimentoIcms')
-    self.cpf_responsavel_registro = xml_data.get('cpfResponsavelRegistro')
-    self.data_pagamento_icms = xml_data.get('dataPagamentoIcms')
-    self.data_registro_icms = xml_data.get('dataRegistro')
-    self.hora_registro_icms = xml_data.get('horaRegistro')
-    self.nome_tipo_recolhimento_icms = xml_data.get('nomeTipoRecolhimentoIcms')
-    self.numero_sequencial_icms = xml_data.get('numeroSequencialIcms')
-    self.uf_icms = xml_data.get('ufIcms')
-    self.valor_total_icms = xml_data.get('valorTotalIcms')
+    # Acessar a estrutura pai "icms" no XML
+    icms_data = xml_data.get('icms')
+
+    if icms_data:
+        # Atribuir os campos ICMS a partir da estrutura pai "icms"
+        self.agencia_icms = icms_data.get('agenciaIcms')
+        self.banco_icms = icms_data.get('bancoIcms')
+        self.codigo_tipo_recolhimento_icms = icms_data.get('codigoTipoRecolhimentoIcms')
+        self.cpf_responsavel_registro = icms_data.get('cpfResponsavelRegistro')
+        self.data_pagamento_icms = icms_data.get('dataPagamentoIcms')
+        self.data_registro_icms = icms_data.get('dataRegistro')
+        self.hora_registro_icms = icms_data.get('horaRegistro')
+        self.nome_tipo_recolhimento_icms = icms_data.get('nomeTipoRecolhimentoIcms')
+        self.numero_sequencial_icms = icms_data.get('numeroSequencialIcms')
+        self.uf_icms = icms_data.get('ufIcms')
+        self.valor_total_icms = icms_data.get('valorTotalIcms')
+    else:
+        _logger.warning("Nenhum dado de ICMS encontrado no XML")
+
 
 
 class L10nBrDiDeclaracao(models.Model):
@@ -305,6 +312,12 @@ class L10nBrDiDeclaracao(models.Model):
             return res
 
     def _importa_declaracao(self, declaracoes):
+        """
+        uma função que só pode ser usada aqui, que recebe declaracoes
+        di recebe o metodo declaracao_importacao do arquivo recebido (declaracoes)
+        o arquivo recebido na verdade é o declaration_list tratado pela classse ListaDeclaracoes
+        ListaDeclaracoes é um mapeamento que recebe a classe inteira declaracaoImportacao DeclaracaoImportacao
+        """
         if not declaracoes.declaracao_importacao:
             raise UserError(_("Nenhuma declaração de importação encontrada"))
 
