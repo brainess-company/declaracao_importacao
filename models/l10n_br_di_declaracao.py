@@ -496,7 +496,7 @@ class L10nBrDiDeclaracao(models.Model):
         invoice = move_form.save()
 
         # Chamar a função para processar os dados ICMS do XML
-        self.process_icms_data(invoice)
+        # self.process_icms_data(invoice)
 
         # Atualização do estado e referência à fatura gerada
         self.write({"account_move_id": invoice.id, "state": "locked"})
