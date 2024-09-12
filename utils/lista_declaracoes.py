@@ -2140,10 +2140,11 @@ class DeclaracaoImportacao:
         },
     )
 
-    # Outros campos já existentes
+    # Outras propriedades...
     icms: Optional[Icms] = field(
         default=None,
         metadata={
+            "name": "icms",
             "type": "Element",
         },
     )
