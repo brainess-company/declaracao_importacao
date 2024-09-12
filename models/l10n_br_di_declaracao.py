@@ -89,6 +89,8 @@ def process_icms_data(self, icms_data):
 
 
 
+
+
 class L10nBrDiDeclaracao(models.Model):
 
     _name = "declaracao_importacao.declaracao"
@@ -476,28 +478,30 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
-        # Atribuição do frete
-        _logger.info('Valor de frete_total_reais antes da atribuição: %s', self.frete_total_reais)
+
+        # Adicionar o frete à fatura
         move_form.amount_freight_value = self.frete_total_reais
-        _logger.info('Valor de amount_freight_value após a atribuição: %s', move_form.amount_freight_value)
 
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = mercadoria.final_price_unit
+
+                # Adicionar impostos que já foram calculados e armazenados
+                line_form.pis_value = mercadoria.pis_valor
+                line_form.cofins_value = mercadoria.cofins_valor
+                line_form.ii_value = mercadoria.ii_valor
+                line_form.ipi_value = mercadoria.ipi_valor
+
+                # Adicionar outros custos, como o AFRMM e outros valores
+                line_form.amount_freight_value = mercadoria.amount_afrmm
                 line_form.other_value = mercadoria.amount_other
-                line_form.di_mercadoria_ids.add(mercadoria)
 
         invoice = move_form.save()
 
-        # Chamar a função para processar os dados ICMS do XML
-        # self.process_icms_data(invoice)
-
-        # Atualização do estado e referência à fatura gerada
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
-        # Exibição da fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read([])[0]
         action["domain"] = [("id", "=", invoice.id)]
         return action
