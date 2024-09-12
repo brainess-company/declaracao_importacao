@@ -21,6 +21,7 @@
                         <field name="quantidade" />
                         <field name="valor_unitario" />
                         <field name="final_price_unit" />
+                        <field name="pis_pasep_aliquota_valor_devido" string="PIS Value" />
                         <field name="amount_other" sum="vOutro" />
                         <field name="amount_total" sum="Total" />
                         <field name="amount_afrmm" sum="vAFRMM" />
