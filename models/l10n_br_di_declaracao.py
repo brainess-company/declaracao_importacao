@@ -473,6 +473,7 @@ class L10nBrDiDeclaracao(models.Model):
         if not fiscal_operation.exists():
             raise ValueError("A operação fiscal com ID 4 não foi encontrada.")
         
+        # Definir os valores básicos da fatura
         invoice_vals = {
             'move_type': 'in_invoice',
             'invoice_date': fields.Date.today(),
@@ -485,44 +486,38 @@ class L10nBrDiDeclaracao(models.Model):
             'amount_freight_value': self.frete_total_reais,  # Frete adicionado à fatura
         }
 
+        # Criar a fatura
         invoice = self.env['account.move'].create(invoice_vals)
 
         # Criar linhas de fatura
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
+                # Definir a conta contábil
+                account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
+                if not account_id:
+                    raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
+
+                # Definir os valores da linha da fatura
                 line_vals = {
                     'product_id': mercadoria.product_id.id,
                     'quantity': mercadoria.quantidade,
                     'price_unit': mercadoria.final_price_unit,
                     'move_id': invoice.id,
+                    'account_id': account_id,  # Garantindo que a conta contábil seja preenchida
                 }
-                # Criação da linha de fatura
+
+                # Criar a linha da fatura
                 line = self.env['account.move.line'].create(line_vals)
 
-                # Adicionar impostos PIS e COFINS
-                _logger.info('Val antes: %s', line_form.fiscal_document_line_id.pis_value)
+                # Adicionar valores de impostos e taxas
+                _logger.info('Val antes: %s', line.fiscal_document_line_id.pis_value)
                 _logger.info('Val a receber: %s', adicao.pis_pasep_aliquota_valor_devido)
-                #line_form.pis_value = line_form.fiscal_document_line_id.pis_value
+
                 line.fiscal_document_line_id.pis_value = adicao.pis_pasep_aliquota_valor_devido
-                _logger.info('Val depois: %s', line_form.fiscal_document_line_id.pis_value)
-
-                #line_form.cofins_value = line_form.fiscal_document_line_id.cofins_aliquota_valor_devido
                 line.fiscal_document_line_id.cofins_value = adicao.cofins_aliquota_valor_devido
-
-                #line_form.ii_value = line_form.fiscal_document_line_id.ii_aliquota_valor_devido
                 line.fiscal_document_line_id.ii_value = adicao.ii_aliquota_valor_devido
-
-                #line_form.ipi_value = line_form.fiscal_document_line_id.ipi_aliquota_valor_devido
                 line.fiscal_document_line_id.ipi_value = adicao.ipi_aliquota_valor_devido
-
-                #line_form.freight_value = line_form.fiscal_document_line_id.frete_valor_reais
                 line.fiscal_document_line_id.freight_value = adicao.frete_valor_reais
-
-                #for fiscal_tax in line.fiscal_document_line_id.fiscal_tax_ids:
-                #    if fiscal_tax.tax_type == 'pis':
-                #        line.pis_value = fiscal_tax.amount
-                #    elif fiscal_tax.tax_type == 'cofins':
-                #        line.cofins_value = fiscal_tax.amount
 
         # Atualizar estado do documento para "locked"
         self.write({'account_move_id': invoice.id, 'state': 'locked'})
