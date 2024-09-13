@@ -481,15 +481,17 @@ class L10nBrDiDeclaracao(models.Model):
             'partner_id': self.di_adicao_ids[0].fornecedor_partner_id.id,
             'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
             'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
-            'issuer': 'partner',  # Ajuste conforme o contexto
+            'issuer': 'partner',
             'fiscal_operation_id': fiscal_operation.id,
-            'amount_freight_value': self.frete_total_reais,  # Frete adicionado à fatura
+            'amount_freight_value': self.frete_total_reais,
         }
 
         # Criar a fatura
         invoice = self.env['account.move'].create(invoice_vals)
 
-        # Criar linhas de fatura
+        total_amount = 0
+
+        # Criar linhas de fatura (débitos)
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
                 # Definir a conta contábil
@@ -497,27 +499,30 @@ class L10nBrDiDeclaracao(models.Model):
                 if not account_id:
                     raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
 
-                # Definir os valores da linha da fatura
+                # Definir os valores da linha da fatura (débito)
                 line_vals = {
                     'product_id': mercadoria.product_id.id,
                     'quantity': mercadoria.quantidade,
                     'price_unit': mercadoria.final_price_unit,
                     'move_id': invoice.id,
-                    'account_id': account_id,  # Garantindo que a conta contábil seja preenchida
+                    'account_id': account_id,  # Débito na conta de despesa
+                    'debit': mercadoria.quantidade * mercadoria.final_price_unit,
+                    'credit': 0.0,
                 }
 
                 # Criar a linha da fatura
-                line = self.env['account.move.line'].create(line_vals)
+                self.env['account.move.line'].create(line_vals)
 
-                # Adicionar valores de impostos e taxas
-                _logger.info('Val antes: %s', line.fiscal_document_line_id.pis_value)
-                _logger.info('Val a receber: %s', adicao.pis_pasep_aliquota_valor_devido)
+                total_amount += mercadoria.quantidade * mercadoria.final_price_unit
 
-                line.fiscal_document_line_id.pis_value = adicao.pis_pasep_aliquota_valor_devido
-                line.fiscal_document_line_id.cofins_value = adicao.cofins_aliquota_valor_devido
-                line.fiscal_document_line_id.ii_value = adicao.ii_aliquota_valor_devido
-                line.fiscal_document_line_id.ipi_value = adicao.ipi_aliquota_valor_devido
-                line.fiscal_document_line_id.freight_value = adicao.frete_valor_reais
+        # Criar linha de crédito (contrapartida)
+        credit_line_vals = {
+            'move_id': invoice.id,
+            'account_id': self.di_adicao_ids[0].fornecedor_partner_id.property_account_payable_id.id,  # Conta a pagar do fornecedor
+            'debit': 0.0,
+            'credit': total_amount,  # O valor total das mercadorias
+        }
+        self.env['account.move.line'].create(credit_line_vals)
 
         # Atualizar estado do documento para "locked"
         self.write({'account_move_id': invoice.id, 'state': 'locked'})
@@ -526,6 +531,7 @@ class L10nBrDiDeclaracao(models.Model):
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action['domain'] = [('id', '=', invoice.id)]
         return action
+
 
     def action_view_invoice(self):
         action = self.env["ir.actions.actions"]._for_xml_id(
