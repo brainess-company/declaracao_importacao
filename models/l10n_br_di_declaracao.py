@@ -488,11 +488,11 @@ class L10nBrDiDeclaracao(models.Model):
                     line_form.price_unit = mercadoria.final_price_unit
 
                     # Adicionando valores de impostos e taxas
-                    line_form.pis_value = adicao.pis_pasep_aliquota_valor_devido
-                    line_form.cofins_value = adicao.cofins_aliquota_valor_devido
-                    line_form.ii_value = adicao.ii_aliquota_valor_devido
-                    line_form.ipi_value = adicao.ipi_aliquota_valor_devido
-                    line_form.freight_value = adicao.frete_valor_reais
+                    line_form.pis_value = line_form.fiscal_document_line_id.pis_value
+                    line_form.cofins_value = line_form.fiscal_document_line_id.cofins_aliquota_valor_devido
+                    line_form.ii_value = line_form.fiscal_document_line_id.ii_aliquota_valor_devido
+                    line_form.ipi_value = line_form.fiscal_document_line_id.ipi_aliquota_valor_devido
+                    line_form.freight_value = line_form.fiscal_document_line_id.frete_valor_reais
 
         invoice = move_form.save()
 
