@@ -474,17 +474,21 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.invoice_date = fields.Date.today()
         move_form.date = move_form.invoice_date
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
+
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         
-        # Definindo fiscal_operation_id
-        # Definindo fiscal_operation_id com o valor 4
-        # Buscar o registro da operação fiscal com ID 4 e atribuí-lo
+        # Busca do registro da operação fiscal com ID 4
         fiscal_operation = self.env['l10n_br_fiscal.operation'].browse(4)
-        move_form.fiscal_operation_id = fiscal_operation
+        
+        # Verifica se o registro foi encontrado antes de atribuí-lo
+        if fiscal_operation.exists():
+            move_form.fiscal_operation_id = fiscal_operation
+        else:
+            raise ValueError("A operação fiscal com ID 4 não foi encontrada.")
         
         move_form.amount_freight_value = self.frete_total_reais  # Frete sendo adicionado à fatura
-
+        
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
                 with move_form.invoice_line_ids.new() as line_form:
