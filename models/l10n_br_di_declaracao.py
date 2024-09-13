@@ -479,8 +479,10 @@ class L10nBrDiDeclaracao(models.Model):
         
         # Definindo fiscal_operation_id
         # Definindo fiscal_operation_id com o valor 4
-        move_form.fiscal_operation_id = 4
-    
+        # Buscar o registro da operação fiscal com ID 4 e atribuí-lo
+        fiscal_operation = self.env['l10n_br_fiscal.operation'].browse(4)
+        move_form.fiscal_operation_id = fiscal_operation
+        
         move_form.amount_freight_value = self.frete_total_reais  # Frete sendo adicionado à fatura
 
         for adicao in self.di_adicao_ids:
