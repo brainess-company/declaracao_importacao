@@ -489,8 +489,11 @@ class L10nBrDiDeclaracao(models.Model):
 
                     # Adicionando valores de impostos e taxas
                     
+                    _logger.info('Val antes: %s', line_form.fiscal_document_line_id.pis_value)
+                    _logger.info('Val a receber: %s', adicao.pis_pasep_aliquota_valor_devido)
                     #line_form.pis_value = line_form.fiscal_document_line_id.pis_value
                     line_form.fiscal_document_line_id.pis_value = adicao.pis_pasep_aliquota_valor_devido
+                    _logger.info('Val depois: %s', line_form.fiscal_document_line_id.pis_value)
 
                     #line_form.cofins_value = line_form.fiscal_document_line_id.cofins_aliquota_valor_devido
                     line_form.fiscal_document_line_id.cofins_value = adicao.cofins_aliquota_valor_devido
