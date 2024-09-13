@@ -465,58 +465,71 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("One or more import lines is missing a product ID."))
 
     def _generate_invoice(self):
-        move_form = Form(
-            self.env["account.move"].with_context(
-                default_move_type="in_invoice",
-                account_predictive_bills_disable_prediction=True,
-            )
-        )
-        move_form.invoice_date = fields.Date.today()
-        move_form.date = move_form.invoice_date
-        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
+        self.ensure_one()
+        self._validate_invoice_fields()
 
-        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
-        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-
-         # Certifique-se de que o issuer está configurado corretamente
-        move_form.issuer = "partner"  # ou "company", conforme o contexto necessário
-
-        # Definindo fiscal_operation_id com o valor 4
+        # Certifique-se de que a operação fiscal e o tipo de documento estão configurados
         fiscal_operation = self.env['l10n_br_fiscal.operation'].browse(4)
-        if fiscal_operation.exists():
-            move_form.fiscal_operation_id = fiscal_operation
-        else:
+        if not fiscal_operation.exists():
             raise ValueError("A operação fiscal com ID 4 não foi encontrada.")
         
-        move_form.amount_freight_value = self.frete_total_reais  # Frete sendo adicionado à fatura
-        
+        invoice_vals = {
+            'move_type': 'in_invoice',
+            'invoice_date': fields.Date.today(),
+            'date': fields.Date.today(),
+            'partner_id': self.di_adicao_ids[0].fornecedor_partner_id.id,
+            'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
+            'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
+            'issuer': 'partner',  # Ajuste conforme o contexto
+            'fiscal_operation_id': fiscal_operation.id,
+            'amount_freight_value': self.frete_total_reais,  # Frete adicionado à fatura
+        }
+
+        invoice = self.env['account.move'].create(invoice_vals)
+
+        # Criar linhas de fatura
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
-                with move_form.invoice_line_ids.new() as line_form:
-                    line_form.product_id = mercadoria.product_id
-                    line_form.quantity = mercadoria.quantidade
-                    line_form.price_unit = mercadoria.final_price_unit
-                    
+                line_vals = {
+                    'product_id': mercadoria.product_id.id,
+                    'quantity': mercadoria.quantidade,
+                    'price_unit': mercadoria.final_price_unit,
+                    'move_id': invoice.id,
+                }
+                # Criação da linha de fatura
+                line = self.env['account.move.line'].create(line_vals)
 
-                    # Adicionando valores de impostos e taxas
-                    for fiscal_tax in line_form.fiscal_document_line_id.fiscal_tax_ids:
-                        if fiscal_tax.tax_type == 'pis':
-                            line_form.pis_value = fiscal_tax.amount
-                        elif fiscal_tax.tax_type == 'cofins':
-                            line_form.cofins_value = fiscal_tax.amount
-            
-                    #pis_tax = self.env.ref('l10n_br_tax.pis')  # Referência ao imposto de PIS
-                    #cofins_tax = self.env.ref('l10n_br_tax.cofins')  # Referência ao imposto de COFINS
-                    #line_form.tax_ids = [(6, 0, [pis_tax.id, cofins_tax.id])]
+                # Adicionar impostos PIS e COFINS
+                _logger.info('Val antes: %s', line_form.fiscal_document_line_id.pis_value)
+                _logger.info('Val a receber: %s', adicao.pis_pasep_aliquota_valor_devido)
+                #line_form.pis_value = line_form.fiscal_document_line_id.pis_value
+                line.fiscal_document_line_id.pis_value = adicao.pis_pasep_aliquota_valor_devido
+                _logger.info('Val depois: %s', line_form.fiscal_document_line_id.pis_value)
 
-        invoice = move_form.save()
+                #line_form.cofins_value = line_form.fiscal_document_line_id.cofins_aliquota_valor_devido
+                line.fiscal_document_line_id.cofins_value = adicao.cofins_aliquota_valor_devido
 
-        # Atualizando o estado do documento para "locked"
-        self.write({"account_move_id": invoice.id, "state": "locked"})
+                #line_form.ii_value = line_form.fiscal_document_line_id.ii_aliquota_valor_devido
+                line.fiscal_document_line_id.ii_value = adicao.ii_aliquota_valor_devido
 
-        # Retornando a ação para exibir a fatura gerada
-        action = self.env.ref("account.action_move_in_invoice_type").read([])[0]
-        action["domain"] = [("id", "=", invoice.id)]
+                #line_form.ipi_value = line_form.fiscal_document_line_id.ipi_aliquota_valor_devido
+                line.fiscal_document_line_id.ipi_value = adicao.ipi_aliquota_valor_devido
+
+                #line_form.freight_value = line_form.fiscal_document_line_id.frete_valor_reais
+                line.fiscal_document_line_id.freight_value = adicao.frete_valor_reais
+
+                #for fiscal_tax in line.fiscal_document_line_id.fiscal_tax_ids:
+                #    if fiscal_tax.tax_type == 'pis':
+                #        line.pis_value = fiscal_tax.amount
+                #    elif fiscal_tax.tax_type == 'cofins':
+                #        line.cofins_value = fiscal_tax.amount
+
+        # Atualizar estado do documento para "locked"
+        self.write({'account_move_id': invoice.id, 'state': 'locked'})
+
+        # Retornar a ação para exibir a fatura gerada
+        action = self.env.ref("account.action_move_in_invoice_type").read()[0]
+        action['domain'] = [('id', '=', invoice.id)]
         return action
 
     def action_view_invoice(self):
