@@ -488,24 +488,10 @@ class L10nBrDiDeclaracao(models.Model):
                     line_form.price_unit = mercadoria.final_price_unit
 
                     # Adicionando valores de impostos e taxas
-                    
-                    _logger.info('Val antes: %s', line_form.fiscal_document_line_id.pis_value)
-                    _logger.info('Val a receber: %s', adicao.pis_pasep_aliquota_valor_devido)
-                    #line_form.pis_value = line_form.fiscal_document_line_id.pis_value
-                    line_form.fiscal_document_line_id.pis_value = adicao.pis_pasep_aliquota_valor_devido
-                    _logger.info('Val depois: %s', line_form.fiscal_document_line_id.pis_value)
-
-                    #line_form.cofins_value = line_form.fiscal_document_line_id.cofins_aliquota_valor_devido
-                    line_form.fiscal_document_line_id.cofins_value = adicao.cofins_aliquota_valor_devido
-
-                    #line_form.ii_value = line_form.fiscal_document_line_id.ii_aliquota_valor_devido
-                    line_form.fiscal_document_line_id.ii_value = adicao.ii_aliquota_valor_devido
-
-                    #line_form.ipi_value = line_form.fiscal_document_line_id.ipi_aliquota_valor_devido
-                    line_form.fiscal_document_line_id.ipi_value = adicao.ipi_aliquota_valor_devido
-
-                    #line_form.freight_value = line_form.fiscal_document_line_id.frete_valor_reais
-                    line_form.fiscal_document_line_id.freight_value = adicao.frete_valor_reais
+            
+                    pis_tax = self.env.ref('l10n_br_tax.pis')  # Referência ao imposto de PIS
+                    cofins_tax = self.env.ref('l10n_br_tax.cofins')  # Referência ao imposto de COFINS
+                    line_form.tax_ids = [(6, 0, [pis_tax.id, cofins_tax.id])]
 
         invoice = move_form.save()
 
