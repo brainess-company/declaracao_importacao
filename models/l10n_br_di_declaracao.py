@@ -477,11 +477,12 @@ class L10nBrDiDeclaracao(models.Model):
 
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-        
-        # Busca do registro da operação fiscal com ID 4
+
+         # Certifique-se de que o issuer está configurado corretamente
+        move_form.issuer = "partner"  # ou "company", conforme o contexto necessário
+
+        # Definindo fiscal_operation_id com o valor 4
         fiscal_operation = self.env['l10n_br_fiscal.operation'].browse(4)
-        
-        # Verifica se o registro foi encontrado antes de atribuí-lo
         if fiscal_operation.exists():
             move_form.fiscal_operation_id = fiscal_operation
         else:
@@ -495,6 +496,7 @@ class L10nBrDiDeclaracao(models.Model):
                     line_form.product_id = mercadoria.product_id
                     line_form.quantity = mercadoria.quantidade
                     line_form.price_unit = mercadoria.final_price_unit
+                    
 
                     # Adicionando valores de impostos e taxas
                     for fiscal_tax in line_form.fiscal_document_line_id.fiscal_tax_ids:
