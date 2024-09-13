@@ -476,9 +476,12 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-        move_form.issuer = "company"
-        move_form.fiscal_operation_id = self.fiscal_operation_id
-        move_form.amount_freight_value = self.frete_total_reais  # Adicionando frete à fatura
+        
+        # Definindo fiscal_operation_id
+        # Definindo fiscal_operation_id com o valor 4
+        move_form.fiscal_operation_id = 4
+    
+        move_form.amount_freight_value = self.frete_total_reais  # Frete sendo adicionado à fatura
 
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
