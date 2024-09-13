@@ -488,10 +488,15 @@ class L10nBrDiDeclaracao(models.Model):
                     line_form.price_unit = mercadoria.final_price_unit
 
                     # Adicionando valores de impostos e taxas
+                    for fiscal_tax in line_form.fiscal_document_line_id.fiscal_tax_ids:
+                        if fiscal_tax.tax_type == 'pis':
+                            line_form.pis_value = fiscal_tax.amount
+                        elif fiscal_tax.tax_type == 'cofins':
+                            line_form.cofins_value = fiscal_tax.amount
             
-                    pis_tax = self.env.ref('l10n_br_tax.pis')  # Referência ao imposto de PIS
-                    cofins_tax = self.env.ref('l10n_br_tax.cofins')  # Referência ao imposto de COFINS
-                    line_form.tax_ids = [(6, 0, [pis_tax.id, cofins_tax.id])]
+                    #pis_tax = self.env.ref('l10n_br_tax.pis')  # Referência ao imposto de PIS
+                    #cofins_tax = self.env.ref('l10n_br_tax.cofins')  # Referência ao imposto de COFINS
+                    #line_form.tax_ids = [(6, 0, [pis_tax.id, cofins_tax.id])]
 
         invoice = move_form.save()
 
