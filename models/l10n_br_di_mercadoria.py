@@ -54,6 +54,8 @@ Uso:
 """
 
 from odoo import fields, models
+import logging
+_logger = logging.getLogger(__name__)
 
 from .l10n_br_di_declaracao import D5, D7
 
@@ -163,6 +165,20 @@ class L10nBrDiMercadoria(models.Model):
     amount_afrmm = fields.Monetary(string="vAFRMM")
 
 
+    def _match_product_unit(self, vals, descricao_mercadoria, unidade_medida):
+        # Busca o produto no Odoo com base na descrição da mercadoria
+        produto = self.env['product.product'].search([('name', 'ilike', descricao_mercadoria)], limit=1)
+        
+        if produto:
+            vals['product_id'] = produto.id
+            vals['uom_id'] = produto.uom_id.id
+        else:
+            # Caso o produto não seja encontrado, lança um aviso ou registra no log
+            _logger.warning(f"Produto não encontrado para a descrição: {descricao_mercadoria}")
+
+        return vals
+
+
     def _importa_declaracao(self, mercadoria):
         vals = {
             "numero_sequencial_item": int(mercadoria.numero_sequencial_item),
@@ -178,6 +194,7 @@ class L10nBrDiMercadoria(models.Model):
             mercadoria.unidade_medida,
         )
         return vals
+    
     
 
         # TODO: Implementar a busca do produto
