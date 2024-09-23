@@ -522,6 +522,10 @@ class L10nBrDiDeclaracao(models.Model):
             'debit': 0.0,
             'credit': total_amount,  # O valor total das mercadorias
         }
+
+        _logger.info('Total debit: %s', total_amount)
+        _logger.info('Credit line: %s', credit_line_vals['credit'])
+        
         self.env['account.move.line'].create(credit_line_vals)
 
         # Atualizar estado do documento para "locked"
@@ -530,8 +534,10 @@ class L10nBrDiDeclaracao(models.Model):
         # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action['domain'] = [('id', '=', invoice.id)]
-        _logger.info('Total debit: %s', total_amount)
-        _logger.info('Credit line: %s', credit_line_vals['credit'])
+        
+        # n chegou nesse ponto
+        _logger.info('Total debit final: %s', total_amount)
+        _logger.info('Credit line final: %s', credit_line_vals['credit'])
         return action
 
 
