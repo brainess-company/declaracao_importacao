@@ -459,6 +459,13 @@ class L10nBrDiDeclaracao(models.Model):
         return self._generate_invoice()
 
 
+    def _validate_invoice_fields(self):
+        if not any(self.di_mercadoria_ids):
+            raise UserError(_("Imported document must have at least one line."))
+        if any(not line_id.product_id for line_id in self.di_mercadoria_ids):
+            raise UserError(_("One or more import lines is missing a product ID."))
+
+
     def _generate_invoice(self):
         self.ensure_one()
         self._validate_invoice_fields()
