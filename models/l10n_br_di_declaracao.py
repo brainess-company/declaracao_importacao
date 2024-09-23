@@ -522,6 +522,8 @@ class L10nBrDiDeclaracao(models.Model):
             'account_id': self.di_adicao_ids[0].fornecedor_partner_id.property_account_payable_id.id,  # Conta a pagar do fornecedor
             'debit': 0.0,
             'credit': total_amount,  # O valor total das mercadorias
+            'exclude_from_invoice_tab': True,  # Excluir da aba de fatura
+            'is_rounding_line': False, # linhas apenas para corrigir arredondamento
         }
 
         move_lines.append((0, 0, credit_line_vals))  # Adiciona a linha de crédito
