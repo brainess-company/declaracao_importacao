@@ -496,27 +496,29 @@ class L10nBrDiDeclaracao(models.Model):
         total_untaxed = 0  # Para somar os valores sem impostos
         total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)  # Quantidade total de todos os produtos
         total_icms = float(self.valor_total_icms)  # O valor total de ICMS a ser rateado
+        total_tax_withholding = 0  # Para acumular a soma de amount_tax_withholding de todas as linhas
         move_lines = []  # Armazenar todas as linhas de movimentação
 
         # Criar linhas de fatura (débitos)
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
                 # Calcular a proporção de ICMS para cada produto
-                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms)/100
+                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
                 # Obter o valor do campo 'valor' de L10nBrDiValor relacionado à adição
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
                 # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
-                pis_value = (adicao.pis_pasep_aliquota_valor_devido/100)
-                cofins_value = (adicao.cofins_aliquota_valor_devido/100)
-                ii_value = (adicao.ii_aliquota_valor_devido/100)
-                ipi_value = (adicao.ipi_aliquota_valor_devido/100)
+                pis_value = (adicao.pis_pasep_aliquota_valor_devido / 100)
+                cofins_value = (adicao.cofins_aliquota_valor_devido / 100)
+                ii_value = (adicao.ii_aliquota_valor_devido / 100)
+                ipi_value = (adicao.ipi_aliquota_valor_devido / 100)
                 freight_value = adicao.frete_valor_reais
-                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms 
-            
+                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+                
                 # Acumular o valor de amount_tax_included e valores sem impostos (untaxed)
                 total_untaxed += mercadoria.quantidade * mercadoria.final_price_unit
                 total_tax_included += amount_tax_included
+                total_tax_withholding += amount_tax_included
 
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
@@ -573,8 +575,8 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar as linhas de movimentação de uma só vez
         invoice.write({'line_ids': move_lines})
 
-        # Atualizar o campo amount_tax com a soma de total_tax_included
-        invoice.write({'amount_tax': total_tax_included})
+        # Atualizar o campo amount_tax com a soma de amount_tax_withholding
+        invoice.write({'amount_tax': total_tax_withholding})
 
         # Calcular o valor total da fatura com os campos desejados
         total_value = (
@@ -583,7 +585,7 @@ class L10nBrDiDeclaracao(models.Model):
             + self.seguro_total_reais
             + sum(valor.valor for adicao in self.di_adicao_ids for valor in adicao.di_adicao_valor_ids)  # Soma de other_value
             + total_tax_included
-
+            #TODO:- self.amount_discount_value
         )
 
         # Atualizar o campo amount_total com o valor calculado
@@ -597,6 +599,7 @@ class L10nBrDiDeclaracao(models.Model):
         action['domain'] = [('id', '=', invoice.id)]
         
         return action
+
 
 
 
