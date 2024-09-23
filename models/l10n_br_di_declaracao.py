@@ -512,12 +512,12 @@ class L10nBrDiDeclaracao(models.Model):
                 ii_value = (adicao.ii_aliquota_valor_devido/100)
                 ipi_value = (adicao.ipi_aliquota_valor_devido/100)
                 freight_value = adicao.frete_valor_reais
-                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms + other_value
+                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms 
              
                 # Acumular o valor de amount_tax_included e valores sem impostos (untaxed)
                 #total_tax_included += amount_tax_included
                 total_untaxed += mercadoria.quantidade * mercadoria.final_price_unit
-                total_tax_included += (amount_tax_included - other_value)
+                total_tax_included += amount_tax_included
 
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
