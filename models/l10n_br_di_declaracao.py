@@ -475,17 +475,6 @@ class L10nBrDiDeclaracao(models.Model):
         if not fiscal_operation.exists():
             raise ValueError("A operação fiscal com ID 4 não foi encontrada.")
         
-
-        # Criar linha fiscal em l10n_br_fiscal_document_line
-        fiscal_line_vals = {
-                'product_id': mercadoria.product_id.id,
-                'quantity': mercadoria.quantidade,
-                'price_unit': mercadoria.final_price_unit,
-                'other_value': mercadoria.amount_other,
-                # Outros campos relevantes para a linha fiscal
-        }
-        fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
-
         # Definir os valores básicos da fatura
         invoice_vals = {
             'move_type': 'in_invoice',
@@ -497,7 +486,6 @@ class L10nBrDiDeclaracao(models.Model):
             'issuer': 'partner',
             'fiscal_operation_id': fiscal_operation.id,
             'amount_freight_value': self.frete_total_reais,
-            'fiscal_document_line_id': fiscal_document_line.id,  # Relacionar à linha fiscal
         }
 
         # Criar a fatura
@@ -514,6 +502,16 @@ class L10nBrDiDeclaracao(models.Model):
                 if not account_id:
                     raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
 
+                # Criar linha fiscal em l10n_br_fiscal_document_line
+                fiscal_line_vals = {
+                    'product_id': mercadoria.product_id.id,
+                    'quantity': mercadoria.quantidade,
+                    'price_unit': mercadoria.final_price_unit,
+                    'other_value': mercadoria.amount_other,
+                    # Outros campos relevantes para a linha fiscal
+                }
+                fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
+
                 # Definir os valores da linha da fatura (débito)
                 line_vals_debit = {
                     'product_id': mercadoria.product_id.id,
@@ -523,6 +521,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'account_id': account_id,  # Débito na conta de despesa
                     'debit': mercadoria.quantidade * mercadoria.final_price_unit,
                     'credit': 0.0,
+                    'fiscal_document_line_id': fiscal_document_line.id  # Relacionar à linha fiscal
                 }
                 total_amount += mercadoria.quantidade * mercadoria.final_price_unit
 
@@ -535,12 +534,12 @@ class L10nBrDiDeclaracao(models.Model):
             'debit': 0.0,
             'credit': total_amount,  # O valor total das mercadorias
             'exclude_from_invoice_tab': True,  # Excluir da aba de fatura
-            'is_rounding_line': False, # linhas apenas para corrigir arredondamento
+            'is_rounding_line': False,  # Apenas para arredondamento
         }
 
         move_lines.append((0, 0, credit_line_vals))  # Adiciona a linha de crédito
 
-        # Criação das linhas de movimentação de uma só vez
+        # Criar as linhas de movimentação de uma só vez
         invoice.write({'line_ids': move_lines})
 
         # Atualizar estado do documento para "locked"
@@ -551,6 +550,7 @@ class L10nBrDiDeclaracao(models.Model):
         action['domain'] = [('id', '=', invoice.id)]
         
         return action
+
 
 
 
