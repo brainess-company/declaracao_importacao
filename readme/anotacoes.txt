@@ -43,3 +43,6 @@ ele vai ficar no objeto: O campo "agencia_icms" não existe no modelo "declaraca
 e tenho q incluir ele na lista de valores da def importa_declaracao
 
 
+agora criei a fatura, relacionou um account move com um l10n_br_fiscal_document 
+mas não preencheu varios campos do l10n_br_fiscal_document
+e não relacionou um account move line com um l10n_br_fiscal_document_line
