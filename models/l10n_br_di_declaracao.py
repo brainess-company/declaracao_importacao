@@ -492,6 +492,8 @@ class L10nBrDiDeclaracao(models.Model):
         invoice = self.env['account.move'].create(invoice_vals)
 
         total_amount = 0
+        total_tax_included = 0  # Para somar os valores de amount_tax_included
+        total_untaxed = 0  # Para somar os valores sem impostos
         total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)  # Quantidade total de todos os produtos
         total_icms = float(self.valor_total_icms)  # O valor total de ICMS a ser rateado
         move_lines = []  # Armazenar todas as linhas de movimentação
@@ -511,6 +513,12 @@ class L10nBrDiDeclaracao(models.Model):
                 ipi_value = (adicao.ipi_aliquota_valor_devido/100)
                 freight_value = adicao.frete_valor_reais
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms + other_value
+             
+                # Acumular o valor de amount_tax_included e valores sem impostos (untaxed)
+                #total_tax_included += amount_tax_included
+                total_untaxed += mercadoria.quantidade * mercadoria.final_price_unit
+                total_tax_included += (amount_tax_included - other_value)
+
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
                 if not account_id:
@@ -564,6 +572,22 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Criar as linhas de movimentação de uma só vez
         invoice.write({'line_ids': move_lines})
+
+        # Atualizar o campo amount_tax com a soma de total_tax_included
+        invoice.write({'amount_tax': total_tax_included})
+
+        # Calcular o valor total da fatura com os campos desejados
+        total_value = (
+            total_untaxed
+            + self.frete_total_reais
+            + self.seguro_total_reais
+            + other_value  # Valor relacionado a outros custos
+            + total_tax_included
+            - self.amount_discount_value
+        )
+
+        # Atualizar o campo amount_total com o valor calculado
+        invoice.write({'amount_total': total_value})
 
         # Atualizar estado do documento para "locked"
         self.write({'account_move_id': invoice.id, 'state': 'locked'})
