@@ -492,17 +492,22 @@ class L10nBrDiDeclaracao(models.Model):
         invoice = self.env['account.move'].create(invoice_vals)
 
         total_amount = 0
+        total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)  # Quantidade total de todos os produtos
+        total_icms = float(self.valor_total_icms)  # O valor total de ICMS a ser rateado
         move_lines = []  # Armazenar todas as linhas de movimentação
 
         # Criar linhas de fatura (débitos)
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
+                # Calcular a proporção de ICMS para cada produto
+                proportional_icms = (mercadoria.quantidade / total_quantity) * total_icms
                 # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
                 pis_value = (adicao.pis_pasep_aliquota_valor_devido/100)
                 cofins_value = (adicao.cofins_aliquota_valor_devido/100)
                 ii_value = (adicao.ii_aliquota_valor_devido/100)
                 ipi_value = (adicao.ipi_aliquota_valor_devido/100)
                 freight_value = adicao.frete_valor_reais
+                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
                 if not account_id:
@@ -515,11 +520,14 @@ class L10nBrDiDeclaracao(models.Model):
                     'price_unit': mercadoria.final_price_unit,
                     'uom_id': mercadoria.uom_id.id,
                     'quantity': mercadoria.quantidade,
+                    'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
+                    'amount_tax_included': amount_tax_included,
                     'pis_value': pis_value,
                     'cofins_value': cofins_value,
                     'ii_value': ii_value,
                     'ipi_value': ipi_value,
                     'freight_value': freight_value,
+                    'icms_value': proportional_icms,  # Valor proporcional de ICMS
                 }
                 fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
 
