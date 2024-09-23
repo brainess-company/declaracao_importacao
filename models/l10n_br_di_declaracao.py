@@ -470,15 +470,10 @@ class L10nBrDiDeclaracao(models.Model):
         self.ensure_one()
         self._validate_invoice_fields()
 
-        _logger.info("Iniciando geração da fatura para a declaração: %s", self.id)
-
         # Certifique-se de que a operação fiscal e o tipo de documento estão configurados
         fiscal_operation = self.env['l10n_br_fiscal.operation'].browse(4)
         if not fiscal_operation.exists():
-            _logger.error("Operação fiscal com ID 4 não foi encontrada.")
             raise ValueError("A operação fiscal com ID 4 não foi encontrada.")
-        
-        _logger.info("Operação fiscal encontrada: %s", fiscal_operation.id)
         
         # Definir os valores básicos da fatura
         invoice_vals = {
@@ -494,26 +489,21 @@ class L10nBrDiDeclaracao(models.Model):
         }
 
         # Criar a fatura
-        _logger.info("Criando a fatura com os seguintes valores: %s", invoice_vals)
         invoice = self.env['account.move'].create(invoice_vals)
 
         total_amount = 0
+        move_lines = []  # Armazenar todas as linhas de movimentação
 
         # Criar linhas de fatura (débitos)
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
-                _logger.info("Processando mercadoria: %s", mercadoria.descricao_mercadoria)
-
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
                 if not account_id:
-                    _logger.error("Conta contábil não configurada para o produto ou categoria: %s", mercadoria.product_id.name)
                     raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
 
-                _logger.info("Conta contábil encontrada: %s", account_id)
-
                 # Definir os valores da linha da fatura (débito)
-                line_vals = {
+                line_vals_debit = {
                     'product_id': mercadoria.product_id.id,
                     'quantity': mercadoria.quantidade,
                     'price_unit': mercadoria.final_price_unit,
@@ -522,20 +512,9 @@ class L10nBrDiDeclaracao(models.Model):
                     'debit': mercadoria.quantidade * mercadoria.final_price_unit,
                     'credit': 0.0,
                 }
-
-                _logger.info("Valores da linha da fatura (débito): %s", line_vals)
-
-                # Criar a linha da fatura
-                try:
-                    line = self.env['account.move.line'].create(line_vals)
-                    _logger.info('Linha de débito criada com sucesso: %s', line.id)
-                except Exception as e:
-                    _logger.error('Erro ao criar linha da fatura: %s', str(e))
-                    raise UserError(_('Erro ao criar linha da fatura: %s' % str(e)))
-
                 total_amount += mercadoria.quantidade * mercadoria.final_price_unit
 
-        _logger.info("Total de débito acumulado: %s", total_amount)
+                move_lines.append((0, 0, line_vals_debit))  # Adiciona a linha de débito
 
         # Criar linha de crédito (contrapartida)
         credit_line_vals = {
@@ -545,30 +524,20 @@ class L10nBrDiDeclaracao(models.Model):
             'credit': total_amount,  # O valor total das mercadorias
         }
 
-        _logger.info("Valores da linha de crédito (contrapartida): %s", credit_line_vals)
+        move_lines.append((0, 0, credit_line_vals))  # Adiciona a linha de crédito
 
-        try:
-            self.env['account.move.line'].create(credit_line_vals)
-            _logger.info('Linha de crédito criada com sucesso.')
-        except Exception as e:
-            _logger.error('Erro ao criar linha de crédito da fatura: %s', str(e))
-            raise UserError(_('Erro ao criar linha de crédito da fatura: %s' % str(e)))
-
-        # Rebalancear as linhas da fatura
-        _logger.info("Recalculando as linhas da fatura.")
-        invoice._recompute_dynamic_lines()
+        # Criação das linhas de movimentação de uma só vez
+        invoice.write({'line_ids': move_lines})
 
         # Atualizar estado do documento para "locked"
         self.write({'account_move_id': invoice.id, 'state': 'locked'})
-        _logger.info("Fatura criada e bloqueada com sucesso: %s", invoice.id)
 
         # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action['domain'] = [('id', '=', invoice.id)]
         
-        _logger.info("Ação retornada para exibir a fatura: %s", action)
-
         return action
+
 
 
 
