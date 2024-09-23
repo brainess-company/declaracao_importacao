@@ -516,7 +516,8 @@ class L10nBrDiDeclaracao(models.Model):
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
                 
                 # Acumular o valor de amount_tax_included e valores sem impostos (untaxed)
-                total_untaxed += mercadoria.quantidade * mercadoria.final_price_unit
+                subtotal = mercadoria.quantidade * mercadoria.final_price_unit
+                total_untaxed += subtotal
                 total_tax_included += amount_tax_included
                 total_tax_withholding += amount_tax_included
 
@@ -532,7 +533,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'price_unit': mercadoria.final_price_unit,
                     'uom_id': mercadoria.uom_id.id,
                     'quantity': mercadoria.quantidade,
-                    'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
+                    'amount_tax_not_included': subtotal,
                     'amount_tax_included': amount_tax_included,
                     'pis_value': pis_value,
                     'cofins_value': cofins_value,
@@ -552,11 +553,11 @@ class L10nBrDiDeclaracao(models.Model):
                     'price_unit': mercadoria.final_price_unit,
                     'move_id': invoice.id,
                     'account_id': account_id,  # Débito na conta de despesa
-                    'debit': (mercadoria.quantidade * mercadoria.final_price_unit) + amount_tax_included + other_value + freight_value,
+                    'debit': subtotal,
                     'credit': 0.0,
                     'fiscal_document_line_id': fiscal_document_line.id  # Relacionar à linha fiscal
                 }
-                total_amount += ((mercadoria.quantidade * mercadoria.final_price_unit) + amount_tax_included + other_value + freight_value)
+                total_amount += subtotal
 
                 move_lines.append((0, 0, line_vals_debit))  # Adiciona a linha de débito
 
@@ -585,7 +586,7 @@ class L10nBrDiDeclaracao(models.Model):
             + self.seguro_total_reais
             + sum(valor.valor for adicao in self.di_adicao_ids for valor in adicao.di_adicao_valor_ids)  # Soma de other_value
             + total_tax_included
-            #TODO:- self.amount_discount_value
+            - self.amount_discount_value
         )
 
         # Atualizar o campo amount_total com o valor calculado
@@ -599,7 +600,6 @@ class L10nBrDiDeclaracao(models.Model):
         action['domain'] = [('id', '=', invoice.id)]
         
         return action
-
 
 
 
