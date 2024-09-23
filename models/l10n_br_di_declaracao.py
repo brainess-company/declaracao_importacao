@@ -504,7 +504,7 @@ class L10nBrDiDeclaracao(models.Model):
                 # Calcular a proporção de ICMS para cada produto
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms)/100
 
-                 # Obter o valor do campo 'valor' de L10nBrDiValor relacionado à adição
+                # Obter o valor do campo 'valor' de L10nBrDiValor relacionado à adição
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
                 # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
                 pis_value = (adicao.pis_pasep_aliquota_valor_devido/100)
@@ -513,9 +513,8 @@ class L10nBrDiDeclaracao(models.Model):
                 ipi_value = (adicao.ipi_aliquota_valor_devido/100)
                 freight_value = adicao.frete_valor_reais
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms 
-             
+            
                 # Acumular o valor de amount_tax_included e valores sem impostos (untaxed)
-                #total_tax_included += amount_tax_included
                 total_untaxed += mercadoria.quantidade * mercadoria.final_price_unit
                 total_tax_included += amount_tax_included
 
@@ -582,9 +581,9 @@ class L10nBrDiDeclaracao(models.Model):
             total_untaxed
             + self.frete_total_reais
             + self.seguro_total_reais
-            + other_value  # Valor relacionado a outros custos
+            + sum(valor.valor for adicao in self.di_adicao_ids for valor in adicao.di_adicao_valor_ids)  # Soma de other_value
             + total_tax_included
-            #TODO: - self.amount_discount_value
+            - self.amount_discount_value
         )
 
         # Atualizar o campo amount_total com o valor calculado
