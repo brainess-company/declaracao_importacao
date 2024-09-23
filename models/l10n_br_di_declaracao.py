@@ -511,7 +511,7 @@ class L10nBrDiDeclaracao(models.Model):
                 }
 
                 # Criar a linha da fatura
-                _logger.info('Line vals', line_vals)
+                _logger.info('Line vals 12344', line_vals)
                 self.env['account.move.line'].create(line_vals)
                 _logger.info('APOS CRIAR LINHA DE FATURA')
 
