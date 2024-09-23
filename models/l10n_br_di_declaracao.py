@@ -503,7 +503,7 @@ class L10nBrDiDeclaracao(models.Model):
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms)/100
 
                  # Obter o valor do campo 'valor' de L10nBrDiValor relacionado à adição
-                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)/100
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
                 # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
                 pis_value = (adicao.pis_pasep_aliquota_valor_devido/100)
                 cofins_value = (adicao.cofins_aliquota_valor_devido/100)
