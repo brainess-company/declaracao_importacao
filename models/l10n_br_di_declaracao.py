@@ -530,6 +530,8 @@ class L10nBrDiDeclaracao(models.Model):
         # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action['domain'] = [('id', '=', invoice.id)]
+        _logger.info('Total debit: %s', total_amount)
+        _logger.info('Credit line: %s', credit_line_vals['credit'])
         return action
 
 
