@@ -497,6 +497,12 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar linhas de fatura (débitos)
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
+                # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
+                pis_value = adicao.pis_pasep_aliquota_valor_devido
+                cofins_value = adicao.cofins_aliquota_valor_devido
+                ii_value = adicao.ii_aliquota_valor_devido
+                ipi_value = adicao.ipi_aliquota_valor_devido
+                freight_value = adicao.frete_valor_reais
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
                 if not account_id:
@@ -509,42 +515,11 @@ class L10nBrDiDeclaracao(models.Model):
                     'price_unit': mercadoria.final_price_unit,
                     'uom_id': mercadoria.uom_id.id,
                     'quantity': mercadoria.quantidade,
-                    'pis_value': mercadoria.pis_pasep_aliquota_valor_devido, #erro
-                    'cofins_value': mercadoria.cofins_aliquota_valor_devido,
-                    #'icms_value': mercadoria.icms_value,
-                    'ipi_value': mercadoria.ipi_aliquota_valor_devido,
-                    'freight_value': mercadoria.frete_valor_reais, #
-                    #'insurance_value': mercadoria.insurance_value,
-                    #'other_value': mercadoria.other_value,
-                    #'icms_base': mercadoria.icms_base,
-                    #'ipi_base': mercadoria.ipi_base,
-                    
-                    # Adicionando outros campos fiscais e relacionados
-                    'ncm_id': mercadoria.ncm_id.id,
-                    'cfop_id': mercadoria.cfop_id.id,
-                    'fiscal_operation_id': mercadoria.fiscal_operation_id.id,
-                    'discount_value': mercadoria.discount_value,
-                    
-                    # Valores adicionais de impostos
-                    'icmsst_value': mercadoria.icmsst_value,
-                    'icmsst_base': mercadoria.icmsst_base,
-                    'icmsfcp_value': mercadoria.icmsfcp_value,
-                    'icmsfcp_base': mercadoria.icmsfcp_base,
-                    
-                    # Outros valores de impostos e bases de cálculo
-                    'pis_base': mercadoria.pis_base,
-                    'cofins_base': mercadoria.cofins_base,
-                    'ipi_base': mercadoria.ipi_base,
-                    'ii_value': mercadoria.ii_value,
-                    'issqn_value': mercadoria.issqn_value,
-                    
-                    # Identificação adicional do produto e da operação fiscal
-                    'nfe40_cProd': mercadoria.nfe40_cProd,
-                    'nfe40_xProd': mercadoria.nfe40_xProd,
-                    'nfe40_indEscala': mercadoria.nfe40_indEscala,
-                    'nfe40_NVE': mercadoria.nfe40_NVE,
-                    'nfe40_cBarra': mercadoria.nfe40_cBarra,
-                    'fiscal_genre_id': mercadoria.fiscal_genre_id.id,
+                    'pis_value': pis_value,
+                    'cofins_value': cofins_value,
+                    'icms_value': ii_value,
+                    'ipi_value': ipi_value,
+                    'freight_value': freight_value,
                 }
                 fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
 
