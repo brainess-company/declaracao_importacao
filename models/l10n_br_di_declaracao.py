@@ -517,7 +517,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'quantity': mercadoria.quantidade,
                     'pis_value': pis_value,
                     'cofins_value': cofins_value,
-                    #'icms_value': ii_value,
+                    'ii_value': ii_value,
                     'ipi_value': ipi_value,
                     'freight_value': freight_value,
                 }
