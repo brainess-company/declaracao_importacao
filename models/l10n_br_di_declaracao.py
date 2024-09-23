@@ -583,7 +583,7 @@ class L10nBrDiDeclaracao(models.Model):
             + self.seguro_total_reais
             + sum(valor.valor for adicao in self.di_adicao_ids for valor in adicao.di_adicao_valor_ids)  # Soma de other_value
             + total_tax_included
-            - self.amount_discount_value
+
         )
 
         # Atualizar o campo amount_total com o valor calculado
