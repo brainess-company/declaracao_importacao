@@ -509,15 +509,15 @@ class L10nBrDiDeclaracao(models.Model):
                     'price_unit': mercadoria.final_price_unit,
                     'uom_id': mercadoria.uom_id.id,
                     'quantity': mercadoria.quantidade,
-                    'pis_value': mercadoria.pis_value,
-                    'cofins_value': mercadoria.cofins_value,
-                    'icms_value': mercadoria.icms_value,
-                    'ipi_value': mercadoria.ipi_value,
-                    'freight_value': mercadoria.freight_value,
-                    'insurance_value': mercadoria.insurance_value,
-                    'other_value': mercadoria.other_value,
-                    'icms_base': mercadoria.icms_base,
-                    'ipi_base': mercadoria.ipi_base,
+                    'pis_value': mercadoria.pis_pasep_aliquota_valor_devido, #erro
+                    'cofins_value': mercadoria.cofins_aliquota_valor_devido,
+                    #'icms_value': mercadoria.icms_value,
+                    'ipi_value': mercadoria.ipi_aliquota_valor_devido,
+                    'freight_value': mercadoria.frete_valor_reais, #
+                    #'insurance_value': mercadoria.insurance_value,
+                    #'other_value': mercadoria.other_value,
+                    #'icms_base': mercadoria.icms_base,
+                    #'ipi_base': mercadoria.ipi_base,
                     
                     # Adicionando outros campos fiscais e relacionados
                     'ncm_id': mercadoria.ncm_id.id,
