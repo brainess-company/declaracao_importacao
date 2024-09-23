@@ -17,6 +17,7 @@ class AccountMove(models.Model):
                     subtotal = (
                         fiscal_line.amount_tax_included +
                         fiscal_line.freight_value +
+                        fiscal_line.other_value +
                         (line.price_unit * line.quantity)
                     )
                     # Atualizar o campo price_subtotal da linha de fatura
