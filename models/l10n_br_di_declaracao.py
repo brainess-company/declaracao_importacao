@@ -500,7 +500,7 @@ class L10nBrDiDeclaracao(models.Model):
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
                 # Calcular a proporção de ICMS para cada produto
-                proportional_icms = (mercadoria.quantidade / total_quantity) * total_icms
+                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms)/100
                 # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
                 pis_value = (adicao.pis_pasep_aliquota_valor_devido/100)
                 cofins_value = (adicao.cofins_aliquota_valor_devido/100)

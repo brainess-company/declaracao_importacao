@@ -15,9 +15,7 @@ class AccountMove(models.Model):
                 if fiscal_line:
                     # Somar os campos desejados da tabela l10n_br_fiscal_document_line
                     subtotal = (
-                        fiscal_line.ii_value +
-                        fiscal_line.ipi_value +
-                        fiscal_line.cofins_value +
+                        fiscal_line.amount_tax_included +
                         fiscal_line.freight_value +
                         (line.price_unit * line.quantity)
                     )
