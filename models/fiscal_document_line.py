@@ -28,25 +28,6 @@ map_transportation_type = {
 
 
 class FiscalDocumentLine(models.Model):
-    """
-    Extensão do Modelo de Linha de Documento Fiscal para Integrar Dados de Declaração de Importação.
-
-    Este modelo herda de `l10n_br_fiscal.document.line` e adiciona campos e métodos relacionados
-    à integração dos dados de Declaração de Importação (DI) para a Nota Fiscal Eletrônica (NF-e).
-
-    Campos:
-        - nfe40_DI (One2many): Relaciona-se com o modelo `nfe.40.di` e armazena os dados de DI
-          para o documento fiscal.
-
-    Métodos:
-        - _compute_nfe40_DI: Computa e atualiza os registros `nfe.40.di` relacionados ao documento fiscal
-          com base nos dados das mercadorias e declarações de importação associadas.
-    
-    Mapeamentos:
-        - map_intermediary_type (dict): Mapeia tipos intermediários para códigos.
-        - map_transportation_type (dict): Mapeia tipos de transporte para códigos.
-    """
-
     _inherit = "l10n_br_fiscal.document.line"
 
     ##########################
@@ -62,17 +43,6 @@ class FiscalDocumentLine(models.Model):
 
     @api.depends("account_line_ids.di_mercadoria_ids", "document_id.state_edoc")
     def _compute_nfe40_DI(self):
-        """
-        Computa e atualiza os dados da Declaração de Importação (DI) para a Nota Fiscal Eletrônica (NF-e).
-
-        Este método é acionado sempre que há alterações nas mercadorias e no estado do documento.
-        Ele prepara e atualiza os registros `nfe.40.di` com informações relacionadas às adições e
-        à declaração de importação, incluindo números, datas, valores e outras informações pertinentes.
-
-        O método limpa os registros existentes e adiciona novos registros baseados nas informações
-        atualizadas das mercadorias e declarações de importação.
-
-        """
         for line in self:
             if not line.document_id._need_compute_nfe_tags:
                 continue
