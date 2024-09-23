@@ -540,6 +540,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'freight_value': freight_value,
                     'icms_value': proportional_icms,  # Valor proporcional de ICMS
                     'other_value': other_value,
+                    'amount_tax_withholding': amount_tax_included,
                 }
                 fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
 
