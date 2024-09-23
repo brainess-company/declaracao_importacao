@@ -511,7 +511,9 @@ class L10nBrDiDeclaracao(models.Model):
                 }
 
                 # Criar a linha da fatura
+                _logger.info('Line vals', line_vals)
                 self.env['account.move.line'].create(line_vals)
+                _logger.info('APOS CRIAR LINHA DE FATURA')
 
                 total_amount += mercadoria.quantidade * mercadoria.final_price_unit
 
@@ -525,7 +527,7 @@ class L10nBrDiDeclaracao(models.Model):
 
         _logger.info('Total debit: %s', total_amount)
         _logger.info('Credit line: %s', credit_line_vals['credit'])
-        
+
         self.env['account.move.line'].create(credit_line_vals)
 
         # Atualizar estado do documento para "locked"
