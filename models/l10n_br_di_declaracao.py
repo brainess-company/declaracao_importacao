@@ -552,11 +552,11 @@ class L10nBrDiDeclaracao(models.Model):
                     'price_unit': mercadoria.final_price_unit,
                     'move_id': invoice.id,
                     'account_id': account_id,  # Débito na conta de despesa
-                    'debit': mercadoria.quantidade * mercadoria.final_price_unit,
+                    'debit': (mercadoria.quantidade * mercadoria.final_price_unit) + amount_tax_included + other_value + freight_value,
                     'credit': 0.0,
                     'fiscal_document_line_id': fiscal_document_line.id  # Relacionar à linha fiscal
                 }
-                total_amount += mercadoria.quantidade * mercadoria.final_price_unit
+                total_amount += ((mercadoria.quantidade * mercadoria.final_price_unit) + amount_tax_included + other_value + freight_value)
 
                 move_lines.append((0, 0, line_vals_debit))  # Adiciona a linha de débito
 
