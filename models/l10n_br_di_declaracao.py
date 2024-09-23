@@ -583,7 +583,7 @@ class L10nBrDiDeclaracao(models.Model):
             + self.seguro_total_reais
             + other_value  # Valor relacionado a outros custos
             + total_tax_included
-            - self.amount_discount_value
+            #TODO: - self.amount_discount_value
         )
 
         # Atualizar o campo amount_total com o valor calculado
