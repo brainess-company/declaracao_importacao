@@ -498,10 +498,10 @@ class L10nBrDiDeclaracao(models.Model):
         for adicao in self.di_adicao_ids:
             for mercadoria in adicao.di_adicao_mercadoria_ids:
                 # Acessar os campos do modelo 'adicao' em vez de 'mercadoria'
-                pis_value = adicao.pis_pasep_aliquota_valor_devido
-                cofins_value = adicao.cofins_aliquota_valor_devido
-                ii_value = adicao.ii_aliquota_valor_devido
-                ipi_value = adicao.ipi_aliquota_valor_devido
+                pis_value = (adicao.pis_pasep_aliquota_valor_devido/100)
+                cofins_value = (adicao.cofins_aliquota_valor_devido/100)
+                ii_value = (adicao.ii_aliquota_valor_devido/100)
+                ipi_value = (adicao.ipi_aliquota_valor_devido/100)
                 freight_value = adicao.frete_valor_reais
                 # Definir a conta contábil
                 account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
@@ -517,7 +517,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'quantity': mercadoria.quantidade,
                     'pis_value': pis_value,
                     'cofins_value': cofins_value,
-                    'icms_value': ii_value,
+                    #'icms_value': ii_value,
                     'ipi_value': ipi_value,
                     'freight_value': freight_value,
                 }
