@@ -483,12 +483,12 @@ class L10nBrDiDeclaracao(models.Model):
                     raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
 
                 # Atualizar as linhas da fatura com os novos valores
-                move_lines.append((1, mercadoria.id, {
-                    'price_unit': mercadoria.final_price_unit,
-                    'debit': subtotal + amount_tax_included + other_value + freight_value,
-                    'account_id': account_id,  # Conta de despesa
-                    'fiscal_document_line_id': mercadoria.fiscal_document_line_id.id,
-                }))
+                #move_lines.append((1, mercadoria.id, {
+                #    'price_unit': mercadoria.final_price_unit,
+                #    'debit': subtotal + amount_tax_included + other_value + freight_value,
+                #    'account_id': account_id,  # Conta de despesa
+                #    'fiscal_document_line_id': mercadoria.fiscal_document_line_id.id,
+                #})) AttributeError: 'declaracao_importacao.mercadoria' object has no attribute 'fiscal_document_line_id'
 
         # Atualizar as linhas da fatura com o `write`
         invoice.write({
