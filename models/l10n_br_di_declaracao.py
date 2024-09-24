@@ -469,19 +469,48 @@ class L10nBrDiDeclaracao(models.Model):
             with move_form.invoice_line_ids.new() as line_form:
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
+                line_form.price_unit = mercadoria.final_price_unit
                 
                 # Cálculo do valor unitário ajustado
-                line_form.price_unit = (
-                    (mercadoria.final_price_unit +  # valor unitário 
-                    + (adicao.frete_valor_reais/mercadoria.quantidade)  # frete
-                    + (other_value/mercadoria.quantidade)  # outros valores
-                    + (adicao.ii_aliquota_valor_devido/mercadoria.quantidade))  # II
-                    / mercadoria.quantidade  # dividir pela quantidade
-                )
-                line_form.di_mercadoria_ids.add(mercadoria)
+                #line_form.price_unit = (
+                #    (mercadoria.final_price_unit +  # valor unitário 
+                #    + (adicao.frete_valor_reais / mercadoria.quantidade)  # frete
+                #    + (other_value / mercadoria.quantidade)  # outros valores
+                #    + (adicao.ii_aliquota_valor_devido / mercadoria.quantidade))  # II
+                #)
+                #line_form.di_mercadoria_ids.add(mercadoria)
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
+
+        # Recuperar as linhas do fiscal_document_line relacionadas ao invoice
+        fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([
+            ('document_id', '=', invoice.fiscal_document_id.id)
+        ])
+
+        # Agora atualizar os valores das linhas com base no dicionário fiscal_line_vals
+        for fiscal_line in fiscal_document_lines:
+            mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == fiscal_line.product_id)
+            if mercadoria:
+                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+
+                fiscal_line_vals = {
+                    'price_unit': mercadoria.final_price_unit,
+                    'quantity': mercadoria.quantidade,
+                    'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
+                    'amount_tax_included': pis_value + cofins_value + ii_value + ipi_value + proportional_icms,
+                    'pis_value': pis_value,
+                    'cofins_value': cofins_value,
+                    'ii_value': ii_value,
+                    'ipi_value': ipi_value,
+                    'freight_value': adicao.frete_valor_reais,
+                    'icms_value': proportional_icms,
+                    'other_value': other_value,
+                    'amount_tax_withholding': pis_value + cofins_value + ii_value + ipi_value + proportional_icms,
+                }
+                
+                fiscal_line.write(fiscal_line_vals)
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
