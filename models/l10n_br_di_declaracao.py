@@ -493,6 +493,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'icms_value': proportional_icms,
                     'other_value': other_value,
                     'amount_tax_withholding': amount_tax_included,
+                    'l10n_br_fiscal_document_line': 'nfe40_ICMSSN101',
                 }
 
                 # Criar a linha fiscal
