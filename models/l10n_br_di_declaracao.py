@@ -428,27 +428,6 @@ class L10nBrDiDeclaracao(models.Model):
             )
         )
 
-        # Definir as informações básicas da fatura
-        move_form.invoice_date = fields.Date.today()
-        move_form.date = move_form.invoice_date
-        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
-        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
-        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-        move_form.issuer = "company"
-        move_form.fiscal_operation_id = self.fiscal_operation_id
-
-        # Adicionar as linhas do produto
-        for mercadoria in self.di_mercadoria_ids:
-            with move_form.invoice_line_ids.new() as line_form:
-                line_form.product_id = mercadoria.product_id
-                line_form.quantity = mercadoria.quantidade
-                line_form.price_unit = mercadoria.final_price_unit
-                line_form.other_value = mercadoria.amount_other
-                line_form.di_mercadoria_ids.add(mercadoria)
-
-        # Salvar a fatura e obter a referência
-        invoice = move_form.save()
-
         # Agora que a fatura foi salva, obtemos as linhas geradas
         total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)
         total_icms = float(self.valor_total_icms)
@@ -476,33 +455,32 @@ class L10nBrDiDeclaracao(models.Model):
                 total_tax_included += amount_tax_included
                 total_tax_withholding += amount_tax_included
 
-                # Criar a linha fiscal para a fatura
-                fiscal_line_vals = {
-                    'document_id': invoice.fiscal_document_id.id,
-                    'product_id': mercadoria.product_id.id,
-                    'price_unit': mercadoria.final_price_unit,
-                    'uom_id': mercadoria.uom_id.id,
-                    'quantity': mercadoria.quantidade,
-                    #'amount_tax_not_included': subtotal,
-                    #'amount_tax_included': amount_tax_included,
-                    #'pis_value': pis_value,
-                    #'cofins_value': cofins_value,
-                    #'ii_value': ii_value,
-                    #'ipi_value': ipi_value,
-                    'freight_value': freight_value,
-                    #'icms_value': proportional_icms,
-                    #'other_value': other_value,
-                    #'amount_tax_withholding': amount_tax_included,
-                    #'l10n_br_fiscal_document_line': 'nfe40_ICMSSN101',
-                }
+        # Definir as informações básicas da fatura
+        move_form.invoice_date = fields.Date.today()
+        move_form.date = move_form.invoice_date
+        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
+        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
+        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
+        move_form.issuer = "company"
+        move_form.fiscal_operation_id = self.fiscal_operation_id
 
-                # Criar a linha fiscal
-                fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
+        # Adicionar as linhas do produto
+        for mercadoria in self.di_mercadoria_ids:
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = mercadoria.product_id
+                line_form.quantity = mercadoria.quantidade
+                
+                # Cálculo do valor unitário ajustado
+                line_form.price_unit = (
+                    mercadoria.final_price_unit  # valor unitário
+                    + adicao.frete_valor_reais / total_quantity  # frete proporcional
+                    + adicao.ii_aliquota_valor_devido / total_quantity  # II proporcional
+                    + other_value / total_quantity  # outros valores proporcionais
+                )
+                line_form.di_mercadoria_ids.add(mercadoria)
 
-                # Atualizar a linha da fatura com o ID da linha fiscal criada
-                line = invoice.invoice_line_ids.filtered(lambda l: l.product_id == mercadoria.product_id and l.quantity == mercadoria.quantidade)
-                if line:
-                    line.write({'fiscal_document_line_id': fiscal_document_line.id})
+        # Salvar a fatura e obter a referência
+        invoice = move_form.save()
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
@@ -510,7 +488,7 @@ class L10nBrDiDeclaracao(models.Model):
         # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action["domain"] = [("id", "=", invoice.id)]
-        
+
         return action
 
 
