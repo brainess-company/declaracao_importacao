@@ -437,6 +437,28 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
 
+        # Criar as linhas de produtos e fiscais
+        for mercadoria in self.di_mercadoria_ids:
+            # Primeiro, criar a linha fiscal
+            fiscal_line_vals = {
+                'document_id': move_form.fiscal_document_id.id,
+                'product_id': mercadoria.product_id.id,
+                'price_unit': mercadoria.final_price_unit,
+                'uom_id': mercadoria.uom_id.id,
+                'quantity': mercadoria.quantidade,
+                'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
+                'amount_tax_included': 0,  # Ajustar conforme necessário
+                'pis_value': 0,  # Ajustar conforme necessário
+                'cofins_value': 0,  # Ajustar conforme necessário
+                'ii_value': 0,  # Ajustar conforme necessário
+                'ipi_value': 0,  # Ajustar conforme necessário
+                'freight_value': 0,  # Ajustar conforme necessário
+                'icms_value': 0,  # Ajustar conforme necessário
+                'other_value': mercadoria.amount_other,
+                'amount_tax_withholding': 0,  # Ajustar conforme necessário
+            }
+            fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
+
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
@@ -483,12 +505,12 @@ class L10nBrDiDeclaracao(models.Model):
                     raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
 
                 # Atualizar as linhas da fatura com os novos valores
-                #move_lines.append((1, mercadoria.id, {
-                #    'price_unit': mercadoria.final_price_unit,
-                #    'debit': subtotal + amount_tax_included + other_value + freight_value,
-                #    'account_id': account_id,  # Conta de despesa
-                #    'fiscal_document_line_id': mercadoria.fiscal_document_line_id.id,
-                #})) AttributeError: 'declaracao_importacao.mercadoria' object has no attribute 'fiscal_document_line_id'
+                move_lines.append((1, mercadoria.id, {
+                    'price_unit': mercadoria.final_price_unit,
+                    'debit': subtotal + amount_tax_included + other_value + freight_value,
+                    'account_id': account_id,  # Conta de despesa
+                    'fiscal_document_line_id': mercadoria.fiscal_document_line_id.id,
+                })) #  AttributeError: 'declaracao_importacao.mercadoria' object has no attribute 'fiscal_document_line_id'
 
         # Atualizar as linhas da fatura com o `write`
         invoice.write({
