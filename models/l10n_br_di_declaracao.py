@@ -488,22 +488,14 @@ class L10nBrDiDeclaracao(models.Model):
             ('document_id', '=', invoice.fiscal_document_id.id)
         ])
 
-        # Agora, atualizar os valores das linhas com base no dicionário fiscal_line_vals
-        for move_line in invoice.line_ids:
-            # Filtrar a linha fiscal correspondente usando o fiscal_document_line_id
-            fiscal_line = fiscal_document_lines.filtered(lambda fl: fl.id == move_line.fiscal_document_line_id)
-            
-            # Certifique-se de que uma única linha foi encontrada
-            if fiscal_line:
-                fiscal_line.ensure_one()  # Garante que apenas uma linha foi encontrada
-                
-                # Validar a correspondência pelo product_id
-                mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == fiscal_line.product_id).ensure_one()
-
-                # Calcular os valores fiscais proporcionais
+        # Agora atualizar os valores das linhas com base no dicionário fiscal_line_vals
+        for fiscal_line in fiscal_document_lines:
+            mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == fiscal_line.product_id)
+            if mercadoria:
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-                
+                # Calcular os valores fiscais proporcionais
+
                 # Calcular os valores de impostos
                 pis_value = (adicao.pis_pasep_aliquota_valor_devido / 100)
                 cofins_value = (adicao.cofins_aliquota_valor_devido / 100)
@@ -512,12 +504,12 @@ class L10nBrDiDeclaracao(models.Model):
                 freight_value = adicao.frete_valor_reais
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
 
-                # Atualizar os valores da linha fiscal
+
                 fiscal_line_vals = {
                     'price_unit': mercadoria.final_price_unit,
                     'quantity': mercadoria.quantidade,
                     'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
-                    'amount_tax_included': amount_tax_included,
+                    'amount_tax_included': pis_value + cofins_value + ii_value + ipi_value + proportional_icms,
                     'pis_value': pis_value,
                     'cofins_value': cofins_value,
                     'ii_value': ii_value,
@@ -525,12 +517,10 @@ class L10nBrDiDeclaracao(models.Model):
                     'freight_value': freight_value,
                     'icms_value': proportional_icms,
                     'other_value': other_value,
-                    'amount_tax_withholding': amount_tax_included,
+                    'amount_tax_withholding': pis_value + cofins_value + ii_value + ipi_value + proportional_icms,
                 }
-
+                
                 fiscal_line.write(fiscal_line_vals)
-            else:
-                raise UserError(_("Nenhuma linha fiscal correspondente encontrada para a linha contábil com o ID %s.") % move_line.id)
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
