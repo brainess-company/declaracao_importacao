@@ -427,7 +427,7 @@ class L10nBrDiDeclaracao(models.Model):
                 account_predictive_bills_disable_prediction=True,
             )
         )
-        
+
         # Definir as informações básicas da fatura
         move_form.invoice_date = fields.Date.today()
         move_form.date = move_form.invoice_date
@@ -436,28 +436,6 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
-
-        # Criar as linhas de produtos e fiscais
-        for mercadoria in self.di_mercadoria_ids:
-            # Primeiro, criar a linha fiscal
-            fiscal_line_vals = {
-                'document_id': move_form.fiscal_document_id.id,
-                'product_id': mercadoria.product_id.id,
-                'price_unit': mercadoria.final_price_unit,
-                'uom_id': mercadoria.uom_id.id,
-                'quantity': mercadoria.quantidade,
-                'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
-                'amount_tax_included': 0,  # Ajustar conforme necessário
-                'pis_value': 0,  # Ajustar conforme necessário
-                'cofins_value': 0,  # Ajustar conforme necessário
-                'ii_value': 0,  # Ajustar conforme necessário
-                'ipi_value': 0,  # Ajustar conforme necessário
-                'freight_value': 0,  # Ajustar conforme necessário
-                'icms_value': 0,  # Ajustar conforme necessário
-                'other_value': mercadoria.amount_other,
-                'amount_tax_withholding': 0,  # Ajustar conforme necessário
-            }
-            fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
 
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
@@ -471,13 +449,12 @@ class L10nBrDiDeclaracao(models.Model):
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
 
-        # Atualizar os campos da fatura com os valores corretos após salvar
+        # Agora que a fatura foi salva, obtemos as linhas geradas
         total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)
         total_icms = float(self.valor_total_icms)
         total_tax_withholding = 0
         total_untaxed = 0
         total_tax_included = 0
-        move_lines = []
 
         # Agora fazemos o write para ajustar os valores com base nos cálculos numéricos corretos
         for adicao in self.di_adicao_ids:
@@ -499,25 +476,32 @@ class L10nBrDiDeclaracao(models.Model):
                 total_tax_included += amount_tax_included
                 total_tax_withholding += amount_tax_included
 
-                # Definir a conta contábil
-                account_id = mercadoria.product_id.categ_id.property_account_expense_categ_id.id or mercadoria.product_id.property_account_expense_id.id
-                if not account_id:
-                    raise UserError(_("A conta contábil para o produto ou categoria não está configurada."))
-
-                # Atualizar as linhas da fatura com os novos valores
-                move_lines.append((1, mercadoria.id, {
+                # Criar a linha fiscal para a fatura
+                fiscal_line_vals = {
+                    'document_id': invoice.fiscal_document_id.id,
+                    'product_id': mercadoria.product_id.id,
                     'price_unit': mercadoria.final_price_unit,
-                    'debit': subtotal + amount_tax_included + other_value + freight_value,
-                    'account_id': account_id,  # Conta de despesa
-                    'fiscal_document_line_id': mercadoria.fiscal_document_line_id.id,
-                })) #  AttributeError: 'declaracao_importacao.mercadoria' object has no attribute 'fiscal_document_line_id'
+                    'uom_id': mercadoria.uom_id.id,
+                    'quantity': mercadoria.quantidade,
+                    'amount_tax_not_included': subtotal,
+                    'amount_tax_included': amount_tax_included,
+                    'pis_value': pis_value,
+                    'cofins_value': cofins_value,
+                    'ii_value': ii_value,
+                    'ipi_value': ipi_value,
+                    'freight_value': freight_value,
+                    'icms_value': proportional_icms,
+                    'other_value': other_value,
+                    'amount_tax_withholding': amount_tax_included,
+                }
 
-        # Atualizar as linhas da fatura com o `write`
-        invoice.write({
-            'line_ids': move_lines,
-            'amount_tax': total_tax_withholding,
-            'amount_total': total_untaxed + total_tax_included + self.frete_total_reais + self.seguro_total_reais,
-        })
+                # Criar a linha fiscal
+                fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create(fiscal_line_vals)
+
+                # Atualizar a linha da fatura com o ID da linha fiscal criada
+                line = invoice.invoice_line_ids.filtered(lambda l: l.product_id == mercadoria.product_id and l.quantity == mercadoria.quantidade)
+                if line:
+                    line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
