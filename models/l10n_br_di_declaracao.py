@@ -477,7 +477,7 @@ class L10nBrDiDeclaracao(models.Model):
                 total_tax_withholding += amount_tax_included
 
                 # Criar a linha fiscal para a fatura
-                fiscal_line_vals = {
+                """fiscal_line_vals = {
                     'document_id': invoice.fiscal_document_id.id,
                     'product_id': mercadoria.product_id.id,
                     'price_unit': mercadoria.final_price_unit,
@@ -493,7 +493,7 @@ class L10nBrDiDeclaracao(models.Model):
                     'icms_value': proportional_icms,
                     'other_value': other_value,
                     'amount_tax_withholding': amount_tax_included,
-                    'l10n_br_fiscal_document_line': 'nfe40_ICMSSN101',
+                    #'l10n_br_fiscal_document_line': 'nfe40_ICMSSN101',
                 }
 
                 # Criar a linha fiscal
@@ -502,7 +502,7 @@ class L10nBrDiDeclaracao(models.Model):
                 # Atualizar a linha da fatura com o ID da linha fiscal criada
                 line = invoice.invoice_line_ids.filtered(lambda l: l.product_id == mercadoria.product_id and l.quantity == mercadoria.quantidade)
                 if line:
-                    line.write({'fiscal_document_line_id': fiscal_document_line.id})
+                    line.write({'fiscal_document_line_id': fiscal_document_line.id})"""
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
