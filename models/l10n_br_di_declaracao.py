@@ -473,9 +473,9 @@ class L10nBrDiDeclaracao(models.Model):
                 # Cálculo do valor unitário ajustado
                 line_form.price_unit = (
                     (mercadoria.final_price_unit * mercadoria.quantidade  # valor unitário vezes a quantidade
-                    + adicao.frete_valor_reais  # frete
-                    + other_value  # outros valores
-                    + adicao.ii_aliquota_valor_devido)  # II
+                    + (adicao.frete_valor_reais/mercadoria.quantidade)  # frete
+                    + (other_value/mercadoria.quantidade)  # outros valores
+                    + (adicao.ii_aliquota_valor_devido/mercadoria.quantidade))  # II
                     / mercadoria.quantidade  # dividir pela quantidade
                 )
                 line_form.di_mercadoria_ids.add(mercadoria)
