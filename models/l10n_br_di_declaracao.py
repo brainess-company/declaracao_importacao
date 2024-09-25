@@ -428,33 +428,6 @@ class L10nBrDiDeclaracao(models.Model):
             )
         )
 
-        # Agora que a fatura foi salva, obtemos as linhas geradas
-        total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)
-        total_icms = float(self.valor_total_icms)
-        total_tax_withholding = 0
-        total_untaxed = 0
-        total_tax_included = 0
-
-        # Agora fazemos o write para ajustar os valores com base nos cálculos numéricos corretos
-        for adicao in self.di_adicao_ids:
-            for mercadoria in adicao.di_adicao_mercadoria_ids:
-                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
-                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-                pis_value = (adicao.pis_pasep_aliquota_valor_devido / 100)
-                cofins_value = (adicao.cofins_aliquota_valor_devido / 100)
-                ii_value = (adicao.ii_aliquota_valor_devido / 100)
-                ipi_value = (adicao.ipi_aliquota_valor_devido / 100)
-                freight_value = adicao.frete_valor_reais
-
-                # Calcular valores incluídos e excluídos de impostos
-                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
-                subtotal = mercadoria.quantidade * mercadoria.final_price_unit
-
-                # Atualizar totais
-                total_untaxed += subtotal
-                total_tax_included += amount_tax_included
-                total_tax_withholding += amount_tax_included
-
         # Definir as informações básicas da fatura
         move_form.invoice_date = fields.Date.today()
         move_form.date = move_form.invoice_date
@@ -471,8 +444,6 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = mercadoria.final_price_unit
                 
-
-
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
 
@@ -485,6 +456,10 @@ class L10nBrDiDeclaracao(models.Model):
         fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([
             ('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))
         ])
+
+        # para calculo do icms
+        total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)
+        total_icms = float(self.valor_total_icms)
 
         # Atualizar os valores das linhas fiscais com base no dicionário fiscal_line_vals
         for fiscal_line in fiscal_document_lines:
@@ -510,6 +485,7 @@ class L10nBrDiDeclaracao(models.Model):
             ii_value = adicao.ii_aliquota_valor_devido / 100
             ipi_value = adicao.ipi_aliquota_valor_devido / 100
             freight_value = adicao.frete_valor_reais
+            other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
             # Calcular o valor total de impostos incluídos
             amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
