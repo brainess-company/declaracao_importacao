@@ -483,7 +483,7 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
         fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([
-            ('id', 'in', account_move_lines.mapped('fiscal_document_line_id'))
+            ('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))  # Garantir que você está mapeando os IDs corretamente
         ])
 
         # Atualizar os valores das linhas fiscais com base no dicionário fiscal_line_vals

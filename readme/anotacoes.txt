@@ -18,7 +18,7 @@ deve ser o campo fiscal_tax_ids da tabela(relação) l10_br_fiscal.tax
 parece que os campos que eu tenho q preencher são os invoice_line_ids do objeto acount_move da relação account_move_line
 por exemplo, no invoice_line_ids (linhas de fatura da declaração) aparece uma furadeira, e na tabela
 account move line n tem o cfop da furadeira mas na linha da fatura aparece, provavelmente está pegando 
-valores da relação fiscal document_line_id
+valores da relação fiscal_document_line_id
 select icms_value from l10n_br_fiscal_document_line where id = '11' o icms_value está zerado 
 
 
