@@ -437,6 +437,9 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.issuer = "company"
         move_form.fiscal_operation_id = self.fiscal_operation_id
 
+        # Calcular a quantidade total para uso no cálculo do ICMS
+        total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
+
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
