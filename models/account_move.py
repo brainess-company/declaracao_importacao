@@ -4,11 +4,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     def _compute_custom_subtotal(self):
-        """
-        Função personalizada para calcular o subtotal da fatura, somando valores
-        como ii_value, ipi_value, cofins_value, freight_value e price_unit * quantity.
-        TODO: FAZER ISSO SÓ PARA FATURAS DE IMPORTAÇÃO
-        """
+
         for move in self:
             for line in move.line_ids:
                 fiscal_line = line.fiscal_document_line_id

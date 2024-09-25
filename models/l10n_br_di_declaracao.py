@@ -508,6 +508,27 @@ class L10nBrDiDeclaracao(models.Model):
 
             fiscal_line.write(fiscal_line_vals)
 
+        # Recuperar as linhas de account.move.line relacionadas ao invoice
+        account_move_lines = self.env['account.move.line'].search([
+            ('move_id', '=', invoice.id)
+        ])
+
+        # Atualizar o subtotal das linhas da fatura
+        for move_line in account_move_lines:
+            # Calcular o subtotal da linha
+            subtotal = (
+                move_line.price_unit * move_line.quantity +  # Valor do produto
+                move_line.fiscal_document_line_id.amount_tax_included +  # Impostos incluídos
+                move_line.fiscal_document_line_id.freight_value +  # Valor do frete
+                move_line.fiscal_document_line_id.other_value  # Outros valores
+            )
+
+            # Atualizar o campo de subtotal na linha da fatura
+            move_line.write({
+                'price_subtotal': subtotal  # Ou o campo correspondente ao subtotal na sua instalação
+            })
+
+
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
