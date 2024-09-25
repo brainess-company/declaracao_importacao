@@ -439,6 +439,7 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Calcular a quantidade total para uso no cálculo do ICMS
         total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
+        total_icms = float(self.valor_total_icms)
 
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
