@@ -440,9 +440,35 @@ class L10nBrDiDeclaracao(models.Model):
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
+                # Obter a adição correspondente à mercadoria
+                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+                
+                # Calcular o ICMS proporcional
+                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
+
+                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+                cofins_value = adicao.cofins_aliquota_valor_devido / 100
+                ii_value = adicao.ii_aliquota_valor_devido / 100
+                ipi_value = adicao.ipi_aliquota_valor_devido / 100
+                freight_value = adicao.frete_valor_reais
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+
+                # Calcular o valor total de impostos incluídos
+                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+
+                # Calcular o preço unitário completo (valor unitário + frete proporcional + impostos)
+                price_unit_full = (
+                    mercadoria.final_price_unit +  # Valor unitário original
+                    (freight_value / mercadoria.quantidade) +  # Frete proporcional
+                    (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
+                    amount_tax_included  # Impostos incluídos
+                )
+
+                # Atribuir o valor completo ao price_unit da linha
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
-                line_form.price_unit = mercadoria.final_price_unit
+                line_form.price_unit = price_unit_full  # Valor completo do produto
                 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
@@ -508,41 +534,6 @@ class L10nBrDiDeclaracao(models.Model):
 
             fiscal_line.write(fiscal_line_vals)
 
-        # Recuperar as linhas de account.move.line relacionadas ao invoice
-        account_move_lines = self.env['account.move.line'].search([
-            ('move_id', '=', invoice.id)
-        ])
-
-        # Atualizar o subtotal das linhas da fatura
-        for move_line in account_move_lines:
-            # Calcular o subtotal da linha
-            subtotal = (
-                move_line.price_unit * move_line.quantity +  # Valor do produto
-                move_line.fiscal_document_line_id.amount_tax_included +  # Impostos incluídos
-                move_line.fiscal_document_line_id.freight_value +  # Valor do frete
-                move_line.fiscal_document_line_id.other_value  # Outros valores
-            )
-
-            # Atualizar o campo de subtotal na linha da fatura
-            move_line.write({
-                'price_subtotal': subtotal  # Ou o campo correspondente ao subtotal na sua instalação
-            })
-        
-        
-        # Recuperar as linhas de account.move.line relacionadas ao invoice
-        account_move_lines = self.env['account.move.line'].search([
-            ('move_id', '=', invoice.id)
-        ])
-
-        # Somar os subtotais de todas as linhas de fatura
-        total_amount = sum(move_line.price_subtotal for move_line in account_move_lines)
-
-        # Atualizar o valor total da fatura no account.move
-        invoice.write({
-            'amount_total': total_amount  # Atualizando o valor total da fatura
-        })
-
-
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
@@ -551,8 +542,6 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
-
-
 
 
 
