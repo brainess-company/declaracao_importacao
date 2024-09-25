@@ -483,7 +483,7 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
         fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([
-            ('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))  # Garantir que você está mapeando os IDs corretamente
+            ('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))
         ])
 
         # Atualizar os valores das linhas fiscais com base no dicionário fiscal_line_vals
@@ -498,15 +498,18 @@ class L10nBrDiDeclaracao(models.Model):
             # Filtrar a mercadoria correspondente com base no product_id
             mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == move_line.product_id).ensure_one()
 
+            # Encontrar a adição correspondente à mercadoria
+            adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+
             # Calcular o ICMS proporcional
             proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
-            # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da mercadoria ou adição
-            pis_value = mercadoria.pis_pasep_aliquota_valor_devido / 100
-            cofins_value = mercadoria.cofins_aliquota_valor_devido / 100
-            ii_value = mercadoria.ii_aliquota_valor_devido / 100
-            ipi_value = mercadoria.ipi_aliquota_valor_devido / 100
-            freight_value = mercadoria.frete_valor_reais
+            # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+            pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+            cofins_value = adicao.cofins_aliquota_valor_devido / 100
+            ii_value = adicao.ii_aliquota_valor_devido / 100
+            ipi_value = adicao.ipi_aliquota_valor_devido / 100
+            freight_value = adicao.frete_valor_reais
 
             # Calcular o valor total de impostos incluídos
             amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -523,7 +526,7 @@ class L10nBrDiDeclaracao(models.Model):
                 'ipi_value': ipi_value,
                 'freight_value': freight_value,
                 'icms_value': proportional_icms,
-                'other_value': mercadoria.other_value,  # Outros valores já associados à mercadoria
+                'other_value': other_value,
                 'amount_tax_withholding': amount_tax_included,
             }
 
