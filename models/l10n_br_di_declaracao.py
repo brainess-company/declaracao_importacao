@@ -466,7 +466,7 @@ class L10nBrDiDeclaracao(models.Model):
                     mercadoria.final_price_unit +  # Valor unitário original
                     (freight_value / mercadoria.quantidade) +  # Frete proporcional
                     (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
-                    amount_tax_included  # Impostos incluídos
+                    (amount_tax_included / mercadoria.quantidade) # Impostos incluídos
                 )
 
                 # Atribuir o valor completo ao price_unit da linha
