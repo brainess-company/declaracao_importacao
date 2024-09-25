@@ -527,6 +527,20 @@ class L10nBrDiDeclaracao(models.Model):
             move_line.write({
                 'price_subtotal': subtotal  # Ou o campo correspondente ao subtotal na sua instalação
             })
+        
+        
+        # Recuperar as linhas de account.move.line relacionadas ao invoice
+        account_move_lines = self.env['account.move.line'].search([
+            ('move_id', '=', invoice.id)
+        ])
+
+        # Somar os subtotais de todas as linhas de fatura
+        total_amount = sum(move_line.price_subtotal for move_line in account_move_lines)
+
+        # Atualizar o valor total da fatura no account.move
+        invoice.write({
+            'amount_total': total_amount  # Atualizando o valor total da fatura
+        })
 
 
         # Atualizar o estado do documento para "locked"
