@@ -555,13 +555,13 @@ class L10nBrDiDeclaracao(models.Model):
                 'ii_value': ii_value,
 
                 # ICMS
-                'icms_percent'
-                'icms_reduction'
+                #'icms_percent'
+                #'icms_reduction'
                 'icms_value': proportional_icms,
                 #'icms_base': mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value + other_value,
                 # 'icms_effective_base': '',
-                'icms_effective_value': '',
-                'icms_effective_percent': '',
+                #'icms_effective_value': '',
+                #'icms_effective_percent': '',
                 
                 # IPI
                 'ipi_base': produto_cfrete + ii_value,
