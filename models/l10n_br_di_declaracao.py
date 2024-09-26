@@ -89,7 +89,7 @@ class L10nBrDiDeclaracao(models.Model):
             "carga_peso_liquido": int(di.carga_peso_liquido) / 10**7,
             "di_adicao_ids": [(0, 0, adicao) for adicao in adicoes],
             "di_mercadoria_ids": [(0, 0, mercadoria) for mercadoria in mercadorias],
-            "di_pagamento_ids": [(0, 0, pagamento) for pagamento em pagamentos],
+            "di_pagamento_ids": [(0, 0, pagamento) for pagamento in pagamentos],
         }
 
         _logger.info('Importação da Declaração de Importação: %s', vals)
