@@ -457,6 +457,9 @@ class L10nBrDiDeclaracao(models.Model):
                 ipi_value = adicao.ipi_aliquota_valor_devido / 100
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+                aliquota_cofins = adicao.cofins_aliquota_ad_valorem
+
+                # TODO: Obter valor pagamento.valor_receita
 
                 # Calcular o valor total de impostos incluídos
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -510,12 +513,17 @@ class L10nBrDiDeclaracao(models.Model):
             proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
             # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+            pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem/100
             pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
             cofins_value = adicao.cofins_aliquota_valor_devido / 100
+            cofins_aliquota = adicao.cofins_aliquota_ad_valorem/100
+            ii_aliquota = adicao.ii_aliquota_ad_valorem/100
             ii_value = adicao.ii_aliquota_valor_devido / 100
+            ipi_aliquota = adicao.ipi_aliquota_ad_valorem/100
             ipi_value = adicao.ipi_aliquota_valor_devido / 100
             freight_value = adicao.frete_valor_reais
             other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+            produto_cfrete = (mercadoria.quantidade * mercadoria.final_price_unit) +  freight_value
 
             # Calcular o valor total de impostos incluídos
             amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -526,16 +534,40 @@ class L10nBrDiDeclaracao(models.Model):
                 'quantity': mercadoria.quantidade,
                 'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
                 'amount_tax_included': amount_tax_included,
-                'pis_value': pis_value,
-                'cofins_value': cofins_value,
-                'ii_value': ii_value,
-                'ipi_value': ipi_value,
                 'freight_value': freight_value,
-                'icms_value': proportional_icms,
                 'other_value': other_value,
-                'icms_percent' : proportional_icms/(mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value + other_value),
                 'amount_tax_withholding': amount_tax_included,
-                'icms_base': mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value + other_value,
+
+                # PIS
+                'pis_base': produto_cfrete,
+                'pis_percent': pis_pasep_aliquota,
+                'pis_value': pis_value,
+
+                # COFINS
+                'cofins_base': produto_cfrete,
+                'cofins_percent': cofins_aliquota,
+                'cofins_value': cofins_value,
+
+                # II IMPOSTO DE IMPORTAÇÃO
+                #'ii_tax_id': '',
+                'ii_base': produto_cfrete,
+                'ii_percent': ii_aliquota,
+                'ii_value': ii_value,
+
+                # ICMS
+                'icms_percent'
+                'icms_reduction'
+                'icms_value': proportional_icms,
+                #'icms_base': mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value + other_value,
+                # 'icms_effective_base': '',
+                'icms_effective_value': '',
+                'icms_effective_percent': '',
+                
+                # IPI
+                'ipi_base': produto_cfrete + ii_value,
+                'ipi_percent': ipi_aliquota,
+                'ipi_value': ipi_value,
+
             }
 
             fiscal_line.write(fiscal_line_vals)
