@@ -4,9 +4,15 @@ from xsdata.formats.dataclass.parsers import XmlParser
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tests.common import Form  # Importação correta do Form
+from ..utils.lista_declaracoes import ListaDeclaracoes
 import logging
 
 _logger = logging.getLogger(__name__)
+D7 = 10**7
+D5 = 10**5
+D4 = 10**4
+D3 = 10**3
+D2 = 10**2
 
 # Função auxiliar para converter data
 def c_data(data):
