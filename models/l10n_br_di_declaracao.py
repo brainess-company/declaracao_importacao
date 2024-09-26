@@ -533,8 +533,9 @@ class L10nBrDiDeclaracao(models.Model):
                 'freight_value': freight_value,
                 'icms_value': proportional_icms,
                 'other_value': other_value,
+                'amount_tax' : amount_tax_included,
                 'amount_tax_withholding': amount_tax_included,
-                'icms_base': mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value,
+                'icms_base': mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value + other_value,
             }
 
             fiscal_line.write(fiscal_line_vals)
