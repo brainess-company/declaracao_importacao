@@ -447,22 +447,18 @@ class L10nBrDiDeclaracao(models.Model):
                 # Obter a adição correspondente à mercadoria
                 adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
                 
+                # Pesquisa o produto associado ao item do XML no Odoo
+                produto = self.env['product.product'].search([('default_code', '=', mercadoria.codigo_produto)], limit=1)
+                if not produto:
+                    raise UserError(f"Produto com código {mercadoria.codigo_produto} não encontrado no sistema.")
+                
                 # Mapeamento dos Impostos
-                icms_tag = adicao.icms_cst  # CST do ICMS no XML
-                icms_tax_id = self.env['account.tax'].search([('cst_code', '=', icms_tag)], limit=1)
-                
-                pis_tag = adicao.pis_cst
-                pis_tax_id = self.env['account.tax'].search([('cst_code', '=', pis_tag)], limit=1)
-                
-                cofins_tag = adicao.cofins_cst
-                cofins_tax_id = self.env['account.tax'].search([('cst_code', '=', cofins_tag)], limit=1)
-                
-                ipi_tag = adicao.ipi_cst
-                ipi_tax_id = self.env['account.tax'].search([('cst_code', '=', ipi_tag)], limit=1)
-                
-                ii_tag = adicao.ii_cst
-                ii_tax_id = self.env['account.tax'].search([('cst_code', '=', ii_tag)], limit=1)
-                
+                icms_tax_id = produto.icms_tax_id
+                pis_tax_id = produto.pis_tax_id
+                cofins_tax_id = produto.cofins_tax_id
+                ipi_tax_id = produto.ipi_tax_id
+                ii_tax_id = produto.ii_tax_id
+
                 # Calcular o ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
                 
@@ -486,21 +482,23 @@ class L10nBrDiDeclaracao(models.Model):
                 )
 
                 # Atribuir o valor completo ao price_unit da linha
-                line_form.product_id = mercadoria.product_id
+                line_form.product_id = produto.id
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full  # Valor completo do produto
 
                 # Preencher os impostos
+                taxes = []
                 if icms_tax_id:
-                    line_form.tax_ids = [(4, icms_tax_id.id)]
+                    taxes.append((4, icms_tax_id.id))
                 if pis_tax_id:
-                    line_form.tax_ids = [(4, pis_tax_id.id)]
+                    taxes.append((4, pis_tax_id.id))
                 if cofins_tax_id:
-                    line_form.tax_ids = [(4, cofins_tax_id.id)]
+                    taxes.append((4, cofins_tax_id.id))
                 if ipi_tax_id:
-                    line_form.tax_ids = [(4, ipi_tax_id.id)]
+                    taxes.append((4, ipi_tax_id.id))
                 if ii_tax_id:
-                    line_form.tax_ids = [(4, ii_tax_id.id)]
+                    taxes.append((4, ii_tax_id.id))
+                line_form.tax_ids = taxes
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
@@ -541,6 +539,7 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
+
 
 
 
