@@ -517,6 +517,8 @@ class L10nBrDiDeclaracao(models.Model):
                 if cofins_tax_id:
                     tax_ids.append(cofins_tax_id.id)
 
+                _logger.warning("TAXIDS", tax_ids)
+
                 if tax_ids:
                     move_line.tax_ids = [(6, 0, tax_ids)]
 
