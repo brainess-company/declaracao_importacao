@@ -445,26 +445,26 @@ class L10nBrDiDeclaracao(models.Model):
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
                 # Obter a adição correspondente à mercadoria
-                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
-
+                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids)
+                if not adicao:
+                    continue
+                
                 # Calcular o ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
-                # Buscar os impostos de IPI, PIS, COFINS e outros com base nas alíquotas do XML
+                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
                 pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
                 cofins_value = adicao.cofins_aliquota_valor_devido / 100
                 ii_value = adicao.ii_aliquota_valor_devido / 100
                 ipi_value = adicao.ipi_aliquota_valor_devido / 100
+                freight_value = adicao.frete_valor_reais
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
                 # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
                 icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
                 ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
-
-                # Outros valores
-                freight_value = adicao.frete_valor_reais
-                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
                 # Calcular o valor total de impostos incluídos
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -488,15 +488,17 @@ class L10nBrDiDeclaracao(models.Model):
         # Recuperar as linhas de account.move.line relacionadas ao invoice
         account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
 
-        # Agora, aplicar os impostos nas linhas de produto após a criação da fatura
+        # Aplicar os impostos nas linhas de produto após a criação da fatura
         for move_line in account_move_lines:
-            # Usar filtragem sem ensure_one para lidar com múltiplos resultados
+            # Filtrar todas as mercadorias associadas ao mesmo product_id
             mercadorias = self.di_mercadoria_ids.filtered(lambda m: m.product_id == move_line.product_id)
             if not mercadorias:
                 continue
 
             for mercadoria in mercadorias:
-                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids)
+                if not adicao:
+                    continue
 
                 # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
                 tax_ids = []
