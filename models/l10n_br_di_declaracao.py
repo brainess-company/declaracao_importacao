@@ -458,7 +458,7 @@ class L10nBrDiDeclaracao(models.Model):
 
                 # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
                 icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
-                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquotaad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
 
