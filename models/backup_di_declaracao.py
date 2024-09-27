@@ -425,6 +425,9 @@ class L10nBrDiDeclaracao(models.Model):
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",
                 account_predictive_bills_disable_prediction=True,
+                # Desabilitar o cálculo automático de impostos
+                force_company=self.env.company.id,
+                fiscal_tax_calculation_method="manual"
             )
         )
 
@@ -457,10 +460,7 @@ class L10nBrDiDeclaracao(models.Model):
                 ipi_value = adicao.ipi_aliquota_valor_devido / 100
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-                aliquota_cofins = adicao.cofins_aliquota_ad_valorem
-
-                # TODO: Obter valor pagamento.valor_receita
-
+                
                 # Calcular o valor total de impostos incluídos
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
 
@@ -469,7 +469,7 @@ class L10nBrDiDeclaracao(models.Model):
                     mercadoria.final_price_unit +  # Valor unitário original
                     (freight_value / mercadoria.quantidade) +  # Frete proporcional
                     (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
-                    (amount_tax_included / mercadoria.quantidade) # Impostos incluídos
+                    (amount_tax_included / mercadoria.quantidade)  # Impostos incluídos
                 )
 
                 # Atribuir o valor completo ao price_unit da linha
@@ -481,18 +481,10 @@ class L10nBrDiDeclaracao(models.Model):
         invoice = move_form.save()
 
         # Recuperar as linhas de account.move.line relacionadas ao invoice
-        account_move_lines = self.env['account.move.line'].search([
-            ('move_id', '=', invoice.id)
-        ])
+        account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
 
         # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
-        fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([
-            ('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))
-        ])
-
-        # para calculo do icms
-        total_quantity = sum(mercadoria.quantidade for adicao in self.di_adicao_ids for mercadoria in adicao.di_adicao_mercadoria_ids)
-        total_icms = float(self.valor_total_icms)
+        fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))])
 
         # Atualizar os valores das linhas fiscais com base no dicionário fiscal_line_vals
         for fiscal_line in fiscal_document_lines:
@@ -513,17 +505,17 @@ class L10nBrDiDeclaracao(models.Model):
             proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
             # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
-            pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem/100
+            pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem / 100
             pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
             cofins_value = adicao.cofins_aliquota_valor_devido / 100
-            cofins_aliquota = adicao.cofins_aliquota_ad_valorem/100
-            ii_aliquota = adicao.ii_aliquota_ad_valorem/100
+            cofins_aliquota = adicao.cofins_aliquota_ad_valorem / 100
+            ii_aliquota = adicao.ii_aliquota_ad_valorem / 100
             ii_value = adicao.ii_aliquota_valor_devido / 100
-            ipi_aliquota = adicao.ipi_aliquota_ad_valorem/100
+            ipi_aliquota = adicao.ipi_aliquota_ad_valorem / 100
             ipi_value = adicao.ipi_aliquota_valor_devido / 100
             freight_value = adicao.frete_valor_reais
             other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-            produto_cfrete = (mercadoria.quantidade * mercadoria.final_price_unit) +  freight_value
+            produto_cfrete = (mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
 
             # Calcular o valor total de impostos incluídos
             amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -549,25 +541,18 @@ class L10nBrDiDeclaracao(models.Model):
                 'cofins_value': cofins_value,
 
                 # II IMPOSTO DE IMPORTAÇÃO
-                #'ii_tax_id': '',
                 'ii_base': produto_cfrete,
                 'ii_percent': ii_aliquota,
                 'ii_value': ii_value,
 
                 # ICMS
-                #'icms_percent'
-                #'icms_reduction'
                 'icms_value': proportional_icms,
-                #'icms_base': mercadoria.quantidade * mercadoria.final_price_unit + amount_tax_included - proportional_icms + freight_value + other_value,
-                # 'icms_effective_base': '',
                 'icms_effective_value': proportional_icms,
-                #'icms_effective_percent': '',
                 
                 # IPI
                 'ipi_base': produto_cfrete + ii_value,
                 'ipi_percent': ipi_aliquota,
                 'ipi_value': ipi_value,
-
             }
 
             fiscal_line.write(fiscal_line_vals)
@@ -580,6 +565,7 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
+
 
 
 
