@@ -460,7 +460,7 @@ class L10nBrDiDeclaracao(models.Model):
                 ipi_value = adicao.ipi_aliquota_valor_devido / 100
 
                 # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
-                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
 
@@ -484,15 +484,20 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full  # Valor completo do produto
 
-                # Preencher os impostos nas linhas
+                # Adicionar os impostos nas linhas
+                tax_ids = []
                 if icms_tax_id:
-                    line_form.tax_ids = [(4, icms_tax_id.id)]
+                    tax_ids.append((4, icms_tax_id.id))
                 if ipi_tax_id:
-                    line_form.tax_ids = [(4, ipi_tax_id.id)]
+                    tax_ids.append((4, ipi_tax_id.id))
                 if pis_tax_id:
-                    line_form.tax_ids = [(4, pis_tax_id.id)]
+                    tax_ids.append((4, pis_tax_id.id))
                 if cofins_tax_id:
-                    line_form.tax_ids = [(4, cofins_tax_id.id)]
+                    tax_ids.append((4, cofins_tax_id.id))
+                
+                # Manipular o campo tax_ids corretamente (many2many)
+                if tax_ids:
+                    line_form.tax_ids = [(6, 0, [tax[1] for tax in tax_ids])]
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
