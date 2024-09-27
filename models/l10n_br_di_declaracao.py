@@ -444,18 +444,18 @@ class L10nBrDiDeclaracao(models.Model):
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
-                # Aqui usamos o product_id diretamente, sem buscar pelo código
+                # Aqui usamos o product_id diretamente
                 produto = mercadoria.product_id
 
                 if not produto:
                     raise UserError(f"Produto não encontrado para a mercadoria {mercadoria.id}.")
                 
-                # Buscar as taxas associadas ao produto na tabela product_supplier_taxes_rel usando product_tmpl_id
-                supplier_taxes = self.env['account.tax'].search([
-                    ('id', 'in', self.env['product.supplierinfo'].search([
-                        ('product_tmpl_id', '=', produto.product_tmpl_id.id)
-                    ]).mapped('taxes_id').ids)
-                ])
+                # Buscar os impostos associados ao produto na tabela de relacionamento product_supplier_taxes_rel
+                self.env.cr.execute("""
+                    SELECT tax_id FROM product_supplier_taxes_rel
+                    WHERE prod_id = %s
+                """, (produto.id,))
+                tax_ids = [tax_id[0] for tax_id in self.env.cr.fetchall()]
 
                 # Calcular o ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
@@ -484,8 +484,9 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full  # Valor completo do produto
 
-                # Preencher os impostos associados ao fornecedor/produto
-                line_form.tax_ids = [(6, 0, supplier_taxes.ids)]
+                # Preencher os impostos associados ao produto
+                if tax_ids:
+                    line_form.tax_ids = [(6, 0, tax_ids)]
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
