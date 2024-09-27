@@ -490,28 +490,33 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Agora, aplicar os impostos nas linhas de produto após a criação da fatura
         for move_line in account_move_lines:
-            mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == move_line.product_id).ensure_one()
-            adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+            # Usar filtragem sem ensure_one para lidar com múltiplos resultados
+            mercadorias = self.di_mercadoria_ids.filtered(lambda m: m.product_id == move_line.product_id)
+            if not mercadorias:
+                continue
 
-            # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
-            tax_ids = []
-            icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
-            ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota * 100), ('type_tax_use', '=', 'purchase')], limit=1)
-            pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
-            cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+            for mercadoria in mercadorias:
+                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
 
-            # Adicionar os impostos na linha
-            if icms_tax_id:
-                tax_ids.append(icms_tax_id.id)
-            if ipi_tax_id:
-                tax_ids.append(ipi_tax_id.id)
-            if pis_tax_id:
-                tax_ids.append(pis_tax_id.id)
-            if cofins_tax_id:
-                tax_ids.append(cofins_tax_id.id)
+                # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
+                tax_ids = []
+                icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
+                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
 
-            if tax_ids:
-                move_line.tax_ids = [(6, 0, tax_ids)]
+                # Adicionar os impostos na linha
+                if icms_tax_id:
+                    tax_ids.append(icms_tax_id.id)
+                if ipi_tax_id:
+                    tax_ids.append(ipi_tax_id.id)
+                if pis_tax_id:
+                    tax_ids.append(pis_tax_id.id)
+                if cofins_tax_id:
+                    tax_ids.append(cofins_tax_id.id)
+
+                if tax_ids:
+                    move_line.tax_ids = [(6, 0, tax_ids)]
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
@@ -521,7 +526,6 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
-
 
 
 
