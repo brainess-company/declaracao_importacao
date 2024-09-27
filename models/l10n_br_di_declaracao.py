@@ -447,9 +447,6 @@ class L10nBrDiDeclaracao(models.Model):
                 # Obter a adição correspondente à mercadoria
                 adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
 
-                # Buscar o imposto de ICMS com 12% de alíquota
-                icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
-
                 # Calcular o ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
@@ -460,7 +457,8 @@ class L10nBrDiDeclaracao(models.Model):
                 ipi_value = adicao.ipi_aliquota_valor_devido / 100
 
                 # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
-                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
+                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquotaad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
                 cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
 
@@ -484,51 +482,36 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full  # Valor completo do produto
 
-                # Adicionar os impostos nas linhas
-                tax_ids = []
-                if icms_tax_id:
-                    tax_ids.append((4, icms_tax_id.id))
-                if ipi_tax_id:
-                    tax_ids.append((4, ipi_tax_id.id))
-                if pis_tax_id:
-                    tax_ids.append((4, pis_tax_id.id))
-                if cofins_tax_id:
-                    tax_ids.append((4, cofins_tax_id.id))
-                
-                # Manipular o campo tax_ids corretamente (many2many)
-                if tax_ids:
-                    line_form.tax_ids = [(6, 0, [tax[1] for tax in tax_ids])]
-
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
 
         # Recuperar as linhas de account.move.line relacionadas ao invoice
         account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
 
-        # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
-        fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search([('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))])
-
-        # Atualizar os valores das linhas fiscais
-        for fiscal_line in fiscal_document_lines:
-            move_line = account_move_lines.filtered(lambda line: line.product_id == fiscal_line.product_id and line.quantity == fiscal_line.quantity).ensure_one()
+        # Agora, aplicar os impostos nas linhas de produto após a criação da fatura
+        for move_line in account_move_lines:
             mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == move_line.product_id).ensure_one()
+            adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
 
-            fiscal_line_vals = {
-                'price_unit': mercadoria.final_price_unit,
-                'quantity': mercadoria.quantidade,
-                'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
-                'amount_tax_included': amount_tax_included,
-                'freight_value': freight_value,
-                'other_value': other_value,
-                'amount_tax_withholding': amount_tax_included,
-                'icms_value': proportional_icms,
-                'ipi_value': ipi_value,
-                'pis_value': pis_value,
-                'cofins_value': cofins_value,
-                'ii_value': ii_value,
-            }
+            # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
+            tax_ids = []
+            icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
+            ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+            pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+            cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
 
-            fiscal_line.write(fiscal_line_vals)
+            # Adicionar os impostos na linha
+            if icms_tax_id:
+                tax_ids.append(icms_tax_id.id)
+            if ipi_tax_id:
+                tax_ids.append(ipi_tax_id.id)
+            if pis_tax_id:
+                tax_ids.append(pis_tax_id.id)
+            if cofins_tax_id:
+                tax_ids.append(cofins_tax_id.id)
+
+            if tax_ids:
+                move_line.tax_ids = [(6, 0, tax_ids)]
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
@@ -538,6 +521,7 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
+
 
 
 
