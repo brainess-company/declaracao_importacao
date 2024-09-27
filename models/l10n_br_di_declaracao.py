@@ -450,10 +450,10 @@ class L10nBrDiDeclaracao(models.Model):
                 if not produto:
                     raise UserError(f"Produto não encontrado para a mercadoria {mercadoria.id}.")
                 
-                # Buscar as taxas associadas ao produto na tabela product_supplier_taxes_rel
+                # Buscar as taxas associadas ao produto na tabela product_supplier_taxes_rel usando product_tmpl_id
                 supplier_taxes = self.env['account.tax'].search([
                     ('id', 'in', self.env['product.supplierinfo'].search([
-                        ('prod_id', '=', produto.id)
+                        ('product_tmpl_id', '=', produto.product_tmpl_id.id)
                     ]).mapped('taxes_id').ids)
                 ])
 
@@ -526,6 +526,7 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
+
 
 
 
