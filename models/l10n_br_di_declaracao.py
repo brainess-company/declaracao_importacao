@@ -460,6 +460,26 @@ class L10nBrDiDeclaracao(models.Model):
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
+                # Buscar os impostos no Odoo com base nas alíquotas extraídas do XML
+                tax1_ids = []
+                icms_tax_id = self.env['account.tax'].search([('amount', '=', 12), ('type_tax_use', '=', 'purchase')], limit=1)
+                ipi_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ipi_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                pis_tax_id = self.env['account.tax'].search([('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                cofins_tax_id = self.env['account.tax'].search([('amount', '=', adicao.cofins_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                ii_tax_id = self.env['account.tax'].search([('amount', '=', adicao.ii_aliquota_ad_valorem * 100), ('type_tax_use', '=', 'purchase')], limit=1)
+                # Adicionar os impostos na linha
+                if icms_tax_id:
+                    tax1_ids.append(icms_tax_id.id)
+                if ipi_tax_id:
+                    tax1_ids.append(ipi_tax_id.id)
+                if pis_tax_id:
+                    tax1_ids.append(pis_tax_id.id)
+                if cofins_tax_id:
+                    tax1_ids.append(cofins_tax_id.id)
+                if ii_tax_id:
+                    tax1_ids.append(ii_tax_id.id)
+
+                _logger.warning("TAXIDS 1", tax1_ids)
 
                 # Calcular o valor total de impostos incluídos
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -501,30 +521,35 @@ class L10nBrDiDeclaracao(models.Model):
                 # Buscar imposto de ICMS pela alíquota
                 icms_tax_id = self.env['account.tax'].search([
                     ('amount', '=', 12),  # Alíquota de 12%
-                    ('tax_group_id', '=', 6)  # Filtrar pelo grupo ICMS
+                    ('type_tax_use', '=', 'purchase'),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)  # Filtrar pelo grupo ICMS
                 ], limit=1)
 
                 # Buscar imposto de IPI pela alíquota
                 ipi_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.ipi_aliquota_ad_valorem * 100),  # Alíquota do IPI extraída do XML
-                    ('tax_group_id', '=', 14)  # Filtrar pelo grupo IPI
+                    ('type_tax_use', '=', 'purchase'),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)  # Filtrar pelo grupo IPI
                 ], limit=1)
 
                 # Buscar imposto de COFINS pela alíquota
                 cofins_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.cofins_aliquota_ad_valorem * 100),  # Alíquota do COFINS extraída do XML
-                    ('tax_group_id', '=', 1)  # Filtrar pelo grupo COFINS
+                    ('type_tax_use', '=', 'purchase'),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)  # Filtrar pelo grupo COFINS
                 ], limit=1)
 
                 # Buscar imposto de PIS pela alíquota
                 pis_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
-                    ('tax_group_id', '=', 21)  # Filtrar pelo grupo PIS
+                    ('type_tax_use', '=', 'purchase'),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)  # Filtrar pelo grupo PIS
                 ], limit=1)
                 # Buscar imposto de II pela alíquota
                 ii_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.ii_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
-                    ('tax_group_id', '=', 11)  # Filtrar pelo grupo II
+                    ('type_tax_use', '=', 'purchase'),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)  # Filtrar pelo grupo PIS
                 ], limit=1)
 
                 # Adicionar os impostos na linha
@@ -593,7 +618,6 @@ class L10nBrDiDeclaracao(models.Model):
                 'freight_value': freight_value,
                 'other_value': other_value,
                 'amount_tax_withholding': amount_tax_included,
-                'amount_tax': amount_tax_included,
 
                 # PIS
                 'pis_base': produto_cfrete,
