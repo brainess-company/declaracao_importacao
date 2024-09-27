@@ -447,10 +447,11 @@ class L10nBrDiDeclaracao(models.Model):
                 # Obter a adição correspondente à mercadoria
                 adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
                 
-                # Pesquisa o produto associado ao item do XML no Odoo
-                produto = self.env['product.product'].search([('default_code', '=', mercadoria.product_id)], limit=1)
+                # Aqui usamos o product_id diretamente, sem buscar pelo código
+                produto = mercadoria.product_id
+
                 if not produto:
-                    raise UserError(f"Produto com código {mercadoria.product_id} não encontrado no sistema.")
+                    raise UserError(f"Produto não encontrado para a mercadoria {mercadoria.id}.")
                 
                 # Mapeamento dos Impostos
                 icms_tax_id = produto.icms_tax_id
