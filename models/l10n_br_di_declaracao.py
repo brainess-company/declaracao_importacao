@@ -458,6 +458,8 @@ class L10nBrDiDeclaracao(models.Model):
                 tax_ids = [tax_id[0] for tax_id in self.env.cr.fetchall()]
 
                 # Calcular o ICMS proporcional
+                # Encontrar a adição correspondente à mercadoria
+                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
                 
                 # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
