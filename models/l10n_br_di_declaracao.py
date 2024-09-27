@@ -444,21 +444,18 @@ class L10nBrDiDeclaracao(models.Model):
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
-                # Obter a adição correspondente à mercadoria
-                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
-                
                 # Aqui usamos o product_id diretamente, sem buscar pelo código
                 produto = mercadoria.product_id
 
                 if not produto:
                     raise UserError(f"Produto não encontrado para a mercadoria {mercadoria.id}.")
                 
-                # Mapeamento dos Impostos
-                icms_tax_id = produto.icms_tax_id
-                pis_tax_id = produto.pis_tax_id
-                cofins_tax_id = produto.cofins_tax_id
-                ipi_tax_id = produto.ipi_tax_id
-                ii_tax_id = produto.ii_tax_id
+                # Buscar as taxas associadas ao produto na tabela product_supplier_taxes_rel
+                supplier_taxes = self.env['account.tax'].search([
+                    ('id', 'in', self.env['product.supplierinfo'].search([
+                        ('prod_id', '=', produto.id)
+                    ]).mapped('taxes_id').ids)
+                ])
 
                 # Calcular o ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
@@ -487,19 +484,8 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full  # Valor completo do produto
 
-                # Preencher os impostos
-                taxes = []
-                if icms_tax_id:
-                    taxes.append((4, icms_tax_id.id))
-                if pis_tax_id:
-                    taxes.append((4, pis_tax_id.id))
-                if cofins_tax_id:
-                    taxes.append((4, cofins_tax_id.id))
-                if ipi_tax_id:
-                    taxes.append((4, ipi_tax_id.id))
-                if ii_tax_id:
-                    taxes.append((4, ii_tax_id.id))
-                line_form.tax_ids = taxes
+                # Preencher os impostos associados ao fornecedor/produto
+                line_form.tax_ids = [(6, 0, supplier_taxes.ids)]
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
@@ -540,6 +526,7 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
+
 
 
 
