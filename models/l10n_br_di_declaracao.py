@@ -501,30 +501,30 @@ class L10nBrDiDeclaracao(models.Model):
                 # Buscar imposto de ICMS pela alíquota
                 icms_tax_id = self.env['account.tax'].search([
                     ('amount', '=', 12),  # Alíquota de 12%
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)  # Filtrar pelo grupo ICMS
+                    ('tax_group_id', '=', 6)  # Filtrar pelo grupo ICMS
                 ], limit=1)
 
                 # Buscar imposto de IPI pela alíquota
                 ipi_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.ipi_aliquota_ad_valorem * 100),  # Alíquota do IPI extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)  # Filtrar pelo grupo IPI
+                    ('tax_group_id', '=', 14)  # Filtrar pelo grupo IPI
                 ], limit=1)
 
                 # Buscar imposto de COFINS pela alíquota
                 cofins_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.cofins_aliquota_ad_valorem * 100),  # Alíquota do COFINS extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)  # Filtrar pelo grupo COFINS
+                    ('tax_group_id', '=', 1)  # Filtrar pelo grupo COFINS
                 ], limit=1)
 
                 # Buscar imposto de PIS pela alíquota
                 pis_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)  # Filtrar pelo grupo PIS
+                    ('tax_group_id', '=', 21)  # Filtrar pelo grupo PIS
                 ], limit=1)
                 # Buscar imposto de II pela alíquota
                 ii_tax_id = self.env['account.tax'].search([
                     ('amount', '=', adicao.ii_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)  # Filtrar pelo grupo PIS
+                    ('tax_group_id', '=', 11)  # Filtrar pelo grupo II
                 ], limit=1)
 
                 # Adicionar os impostos na linha
