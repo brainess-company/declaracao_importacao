@@ -558,6 +558,7 @@ class L10nBrDiDeclaracao(models.Model):
 
 
 
+
     def action_view_invoice(self):
         action = self.env["ir.actions.actions"]._for_xml_id(
             "account.action_move_out_invoice_type"
