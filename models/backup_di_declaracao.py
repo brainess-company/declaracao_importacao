@@ -418,6 +418,7 @@ class L10nBrDiDeclaracao(models.Model):
         if any(not line_id.product_id for line_id in self.di_mercadoria_ids):
             raise UserError(_("One or more import lines is missing a product ID."))
 
+
     def _generate_invoice(self):
         # Dados básicos da fatura
         invoice_vals = {
@@ -464,12 +465,11 @@ class L10nBrDiDeclaracao(models.Model):
                 (amount_tax_included / mercadoria.quantidade)  # Impostos incluídos
             )
 
-            # Adicionar a linha do produto com os impostos
+            # Preparar a linha da fatura, sem os tax_ids
             invoice_line_vals = {
                 'product_id': mercadoria.product_id.id,
                 'quantity': mercadoria.quantidade,
                 'price_unit': price_unit_full,
-
             }
 
             # Adicionar a linha ao dicionário da fatura
