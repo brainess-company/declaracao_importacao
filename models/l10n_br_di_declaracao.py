@@ -514,8 +514,10 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full
 
-                # Salvar os impostos diretamente na tabela de relacionamento account_move_line_account_tax_rel
-                line_form.tax_ids = [(6, 0, tax_ids)]  # Usar IDs diretamente de l10n_br_fiscal_tax
+            # Após salvar a linha do produto, atribua os impostos usando write no campo tax_ids
+            if tax_ids:
+                line_form.save()
+                line_form.write({'tax_ids': [(6, 0, tax_ids)]})
 
         # Salvar a fatura e retornar a ação para exibição
         invoice = move_form.save()
@@ -524,6 +526,7 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
+
 
 
 
