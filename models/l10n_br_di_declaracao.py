@@ -515,6 +515,10 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
             product = move_line.product_id
+            if not product:
+                raise UserError(
+                    f"A linha da fatura não possui um produto definido. Verifique as linhas da fatura.")
+
             if not product.default_code:
                 raise UserError(
                     f"O produto {product.name} não possui um código interno (default_code).")
@@ -522,7 +526,7 @@ class L10nBrDiDeclaracao(models.Model):
             # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
-                'product_id': move_line.product_id.id,
+                'product_id': product.id,
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
                 'nfe40_cProd': product.default_code,  # Usar o código interno do produto
