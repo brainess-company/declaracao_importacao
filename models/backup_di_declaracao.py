@@ -418,6 +418,7 @@ class L10nBrDiDeclaracao(models.Model):
         if any(not line_id.product_id for line_id in self.di_mercadoria_ids):
             raise UserError(_("One or more import lines is missing a product ID."))
 
+
     def _generate_invoice(self):
         # Criamos a fatura com o Form para garantir que todos os gatilhos sejam disparados
         move_form = Form(
@@ -477,9 +478,11 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full
 
-                # Adicionar os impostos diretamente na linha, evitando cálculos automáticos
-                line_form.tax_ids = [
-                    (6, 0, [adicao.icms_id.id, adicao.pis_id.id, adicao.cofins_id.id])]
+                # Manipular o campo Many2many tax_ids corretamente usando o proxy apropriado
+                line_form.tax_ids.clear()  # Limpar quaisquer impostos existentes
+                line_form.tax_ids.add(adicao.icms_id)
+                line_form.tax_ids.add(adicao.pis_id)
+                line_form.tax_ids.add(adicao.cofins_id)
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
