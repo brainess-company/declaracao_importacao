@@ -514,12 +514,20 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
-            # Criar a linha do documento fiscal
+            # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
                 'product_id': move_line.product_id.id,
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
+                'nfe40_choice_icms': 'nfe40_ICMSSN101',
+                'nfe40_choice_tipi': 'nfe40_IPINT',
+                'nfe40_choice_ipitrib': 'nfe40_pIPI',
+                'nfe40_choice_pis': 'nfe40_PISOutr',
+                'nfe40_choice_pisoutr': 'nfe40_pPIS',
+                'nfe40_choice_COFINS': 'nfe40_COFINSOutr',
+                'nfe40_choice_cofinsoutr': 'nfe40_COFINS',
+                'nfe40_choice_imposto': 'nfe40_ICMS',
             })
 
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
