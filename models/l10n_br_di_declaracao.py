@@ -451,84 +451,44 @@ class L10nBrDiDeclaracao(models.Model):
                 # Calcular ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
-                # Obter valores de impostos
-                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
-                cofins_value = adicao.cofins_aliquota_valor_devido / 100
-                ii_value = adicao.ii_aliquota_valor_devido / 100
-                ipi_value = adicao.ipi_aliquota_valor_devido / 100
-                freight_value = adicao.frete_valor_reais
-                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-
-                # Buscar os impostos no Odoo, filtrando pelo grupo correto
-                # Primeiro buscamos na tabela l10n_br_fiscal.tax e depois mapeamos para account.tax
+                # Obter valores de impostos diretamente da tabela l10n_br_fiscal_tax
                 icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', 12),  # Alíquota de 12% para ICMS
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)  # Grupo ICMS
+                    ('percent_amount', '=', 12),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)
                 ], limit=1)
-
-                if icms_fiscal_tax:
-                    icms_tax_id = self.env['account.tax'].search([
-                        ('l10n_br_fiscal_tax_id', '=', icms_fiscal_tax.id),
-                        ('type_tax_use', '=', 'purchase')
-                    ], limit=1)
 
                 ipi_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', adicao.ipi_aliquota_ad_valorem * 100),  # Alíquota do IPI extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)  # Grupo IPI
+                    ('percent_amount', '=', adicao.ipi_aliquota_ad_valorem * 100),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)
                 ], limit=1)
-
-                if ipi_fiscal_tax:
-                    ipi_tax_id = self.env['account.tax'].search([
-                        ('l10n_br_fiscal_tax_id', '=', ipi_fiscal_tax.id),
-                        ('type_tax_use', '=', 'purchase')
-                    ], limit=1)
 
                 pis_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)  # Grupo PIS
+                    ('percent_amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)
                 ], limit=1)
-
-                if pis_fiscal_tax:
-                    pis_tax_id = self.env['account.tax'].search([
-                        ('l10n_br_fiscal_tax_id', '=', pis_fiscal_tax.id),
-                        ('type_tax_use', '=', 'purchase')
-                    ], limit=1)
 
                 cofins_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', adicao.cofins_aliquota_ad_valorem * 100),  # Alíquota do COFINS extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)  # Grupo COFINS
+                    ('percent_amount', '=', adicao.cofins_aliquota_ad_valorem * 100),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)
                 ], limit=1)
-
-                if cofins_fiscal_tax:
-                    cofins_tax_id = self.env['account.tax'].search([
-                        ('l10n_br_fiscal_tax_id', '=', cofins_fiscal_tax.id),
-                        ('type_tax_use', '=', 'purchase')
-                    ], limit=1)
 
                 ii_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', adicao.ii_aliquota_ad_valorem * 100),  # Alíquota do II extraída do XML
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)  # Grupo II
+                    ('percent_amount', '=', adicao.ii_aliquota_ad_valorem * 100),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)
                 ], limit=1)
 
-                if ii_fiscal_tax:
-                    ii_tax_id = self.env['account.tax'].search([
-                        ('l10n_br_fiscal_tax_id', '=', ii_fiscal_tax.id),
-                        ('type_tax_use', '=', 'purchase')
-                    ], limit=1)
-
-
-                # Armazenar os IDs dos impostos
+                # Armazenar os IDs dos impostos da tabela l10n_br_fiscal_tax
                 tax_ids = []
-                if icms_tax_id:
-                    tax_ids.append(icms_tax_id.id)
-                if ipi_tax_id:
-                    tax_ids.append(ipi_tax_id.id)
-                if pis_tax_id:
-                    tax_ids.append(pis_tax_id.id)
-                if cofins_tax_id:
-                    tax_ids.append(cofins_tax_id.id)
-                if ii_tax_id:
-                    tax_ids.append(ii_tax_id.id)
+                if icms_fiscal_tax:
+                    tax_ids.append(icms_fiscal_tax.id)
+                if ipi_fiscal_tax:
+                    tax_ids.append(ipi_fiscal_tax.id)
+                if pis_fiscal_tax:
+                    tax_ids.append(pis_fiscal_tax.id)
+                if cofins_fiscal_tax:
+                    tax_ids.append(cofins_fiscal_tax.id)
+                if ii_fiscal_tax:
+                    tax_ids.append(ii_fiscal_tax.id)
 
                 # Calcular o valor total de impostos incluídos
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
@@ -545,14 +505,16 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full
-                line_form.tax_ids = [(6, 0, tax_ids)]  # Adicionar os impostos calculados
+
+                # Salvar os impostos diretamente na tabela de relacionamento account_move_line_account_tax_rel
+                line_form.tax_ids = [(6, 0, tax_ids)]  # Usar IDs diretamente de l10n_br_fiscal_tax
 
         # Salvar a fatura e retornar a ação para exibição
         invoice = move_form.save()
         self.write({"account_move_id": invoice.id, "state": "locked"})
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action["domain"] = [("id", "=", invoice.id)]
-        
+
         return action
 
 
