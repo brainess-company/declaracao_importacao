@@ -444,7 +444,7 @@ class L10nBrDiDeclaracao(models.Model):
             'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
             'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
             'issuer': 'company',
-            'fiscal_operation_id': self.fiscal_operation_id.id,
+            'fiscal_operation_id': self.fiscal_operation_id,
             'invoice_line_ids': [],
         }
 
