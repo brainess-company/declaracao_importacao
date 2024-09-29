@@ -501,7 +501,7 @@ class L10nBrDiDeclaracao(models.Model):
                     ('tax_domain', '=', 'ii')
                 ], limit=1)
 
-                # Armazenar os IDs dos impostos
+                # Armazenar os IDs dos impostos da tabela l10n_br_fiscal_tax
                 tax_ids = []
                 if icms_fiscal_tax:
                     tax_ids.append(icms_fiscal_tax.id)
@@ -530,10 +530,9 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full
 
-                # Associar os impostos ao movimento usando o campo many2many de forma apropriada
-                line_form.tax_ids.clear()  # Limpar qualquer imposto existente antes de adicionar novos
-                line_form.tax_ids.add(
-                    [(6, 0, tax_ids)])  # Adicionar os impostos como IDs de l10n_br_fiscal_tax
+                # Definir os impostos utilizando a estrutura Many2many
+                line_form.tax_ids = [
+                    (6, 0, tax_ids)]  # Utilizando a maneira correta de adicionar ao Many2many
 
         # Salvar a fatura e retornar a ação para exibição
         invoice = move_form.save()
