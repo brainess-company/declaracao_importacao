@@ -462,7 +462,7 @@ class L10nBrDiDeclaracao(models.Model):
                 # Buscar os impostos no Odoo, filtrando pelo grupo correto
                 # Primeiro buscamos na tabela l10n_br_fiscal.tax e depois mapeamos para account.tax
                 icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('amount_percent', '=', 12),  # Alíquota de 12% para ICMS
+                    ('amount_percent', '=', float(12)),  # Alíquota de 12% para ICMS
                     ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)  # Grupo ICMS
                 ], limit=1)
 
