@@ -498,18 +498,27 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar a fatura
         invoice = self.env['account.move'].create(invoice_vals)
 
+        # Conectar a fatura criada com o documento fiscal
+        fiscal_document_vals = {
+            'move_id': invoice.id,
+            'partner_id': invoice.partner_id.id,
+            'document_type_id': invoice.document_type_id.id,
+            'document_serie_id': invoice.document_serie_id.id,
+            'fiscal_operation_id': fiscal_operation_id,
+        }
+        fiscal_document = self.env['l10n_br_fiscal.document'].create(fiscal_document_vals)
+
         # Recuperar as linhas de account.move.line relacionadas ao invoice
         account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
 
-        # Agora, criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
+        # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
             fiscal_line_vals = {
-                'fiscal_document_id': invoice.id,  # Associar ao documento fiscal (ID da fatura)
+                'document_id': fiscal_document.id,  # Associar ao documento fiscal (ID da fatura)
                 'product_id': move_line.product_id.id,
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
                 'account_move_line_id': move_line.id,  # Relacionar a linha de fatura
-                # Outros campos fiscais importantes
             }
 
             # Criar as linhas fiscais
