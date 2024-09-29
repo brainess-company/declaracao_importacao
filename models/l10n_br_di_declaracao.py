@@ -498,17 +498,6 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar a fatura
         invoice = self.env['account.move'].create(invoice_vals)
 
-        # Verificar se as linhas da fatura foram criadas
-        if not invoice.invoice_line_ids:
-            raise UserError(
-                "Nenhuma linha da fatura foi criada. Verifique o processo de criação das linhas.")
-
-        # Recuperar as linhas de account.move.line relacionadas ao invoice
-        account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
-
-        if not account_move_lines:
-            raise UserError("Nenhuma linha foi encontrada para a fatura gerada.")
-
         # Conectar a fatura criada com o documento fiscal
         fiscal_document = self.env['l10n_br_fiscal.document'].create({
             'partner_id': invoice.partner_id.id,
@@ -520,25 +509,17 @@ class L10nBrDiDeclaracao(models.Model):
         # Atualizar o campo fiscal_document_id na fatura
         invoice.write({'fiscal_document_id': fiscal_document.id})
 
+        # Recuperar as linhas de account.move.line relacionadas ao invoice
+        account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
+
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
-            product = move_line.product_id
-            if not product:
-                raise UserError(
-                    f"A linha da fatura não possui um produto definido. Verifique as linhas da fatura.")
-
-            # Verifique se o `default_code` está disponível
-            if not product.default_code:
-                raise UserError(
-                    f"O produto {product.name} não possui um código interno (default_code).")
-
-            # Criar a linha do documento fiscal com o `default_code`
+            # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
-                'product_id': product.id,
+                'product_id': move_line.product_id.id,
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
-                'nfe40_cProd': product.default_code,  # Usar o código interno do produto
                 'nfe40_choice_icms': 'nfe40_ICMSSN101',
                 'nfe40_choice_tipi': 'nfe40_IPINT',
                 'nfe40_choice_ipitrib': 'nfe40_pIPI',
@@ -548,6 +529,15 @@ class L10nBrDiDeclaracao(models.Model):
                 'nfe40_choice_cofinsoutr': 'nfe40_pCOFINS',
                 'nfe40_choice_imposto': 'nfe40_ICMS',
             })
+
+            # Verificação e atribuição das strings corretas para campos
+            for field_name in ['nfe40_choice_icms', 'nfe40_choice_tipi', 'nfe40_choice_ipitrib',
+                               'nfe40_choice_pis', 'nfe40_choice_pisoutr', 'nfe40_choice_cofins',
+                               'nfe40_choice_cofinsoutr', 'nfe40_choice_imposto']:
+                value = getattr(fiscal_document_line, field_name, False)
+                if isinstance(value, bool):  # Corrigir valor booleano inesperado
+                    setattr(fiscal_document_line, field_name,
+                            'nfe40_ICMSSN101' if field_name == 'nfe40_choice_icms' else 'nfe40_ICMS')
 
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
