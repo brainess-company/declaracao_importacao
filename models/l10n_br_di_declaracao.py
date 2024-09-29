@@ -417,6 +417,23 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("Imported document must have at least one line."))
         if any(not line_id.product_id for line_id in self.di_mercadoria_ids):
             raise UserError(_("One or more import lines is missing a product ID."))
+        
+
+    def get_default_cst_by_aliquota(aliquota, regime_tributario):
+        # Tabela de mapeamento entre alíquotas e CSTs por regime
+        cst_mapping = {
+            'lucro_real_presumido': {
+                12: '00',  # Alíquota de 12% para Lucro Real/Presumido
+                18: '20',  # Alíquota de 18% para Lucro Real/Presumido
+            },
+            'simples_nacional': {
+                12: '102',  # Alíquota de 12% para Simples Nacional
+                18: '103',  # Alíquota de 18% para Simples Nacional
+            }
+        }
+
+        return cst_mapping.get(regime_tributario, {}).get(aliquota, '60')  # Retorna 00 por padrão
+
 
 
     def _generate_invoice(self):
@@ -459,30 +476,37 @@ class L10nBrDiDeclaracao(models.Model):
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
-                # Buscar os impostos diretamente da tabela l10n_br_fiscal_tax
+                # Determinar o CST e buscar impostos correspondentes
+                # Atribuir CST com base na alíquota ou regime, como discutido anteriormente
+                regime_tributario = self.partner_id.regime_tributario
+                icms_cst = get_default_cst_by_aliquota(adicao.icms_aliquota_ad_valorem, regime_tributario)
+                pis_cst = get_default_cst_by_aliquota(adicao.pis_pasep_aliquota_ad_valorem, regime_tributario)
+                cofins_cst = get_default_cst_by_aliquota(adicao.cofins_aliquota_ad_valorem, regime_tributario)
+
+                # Buscar os impostos diretamente da tabela l10n_br_fiscal_tax usando CST e percentuais
                 icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', 12),
-                    ('tax_domain', '=', 'icms')
+                    ('cst', '=', icms_cst),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)
                 ], limit=1)
 
                 ipi_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', adicao.ipi_aliquota_ad_valorem * 100),
-                    ('tax_domain', '=', 'ipi')
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)
                 ], limit=1)
 
                 pis_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),
-                    ('tax_domain', '=', 'pis')
+                    ('cst', '=', pis_cst),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)
                 ], limit=1)
 
                 cofins_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('percent_amount', '=', adicao.cofins_aliquota_ad_valorem * 100),
-                    ('tax_domain', '=', 'cofins')
+                    ('cst', '=', cofins_cst),
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)
                 ], limit=1)
 
                 ii_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', adicao.ii_aliquota_ad_valorem * 100),
-                    ('tax_domain', '=', 'ii')
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)
                 ], limit=1)
 
                 # Armazenar os IDs dos impostos
@@ -524,8 +548,6 @@ class L10nBrDiDeclaracao(models.Model):
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
-
-
 
 
     def action_view_invoice(self):
