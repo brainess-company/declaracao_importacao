@@ -525,7 +525,7 @@ class L10nBrDiDeclaracao(models.Model):
                 'nfe40_choice_ipitrib': 'nfe40_pIPI',
                 'nfe40_choice_pis': 'nfe40_PISOutr',
                 'nfe40_choice_pisoutr': 'nfe40_pPIS',
-                'nfe40_choice_COFINS': 'nfe40_COFINSOutr',
+                'nfe40_choice_cofins': 'nfe40_COFINSOutr',
                 'nfe40_choice_cofinsoutr': 'nfe40_COFINS',
                 'nfe40_choice_imposto': 'nfe40_ICMS',
             })
