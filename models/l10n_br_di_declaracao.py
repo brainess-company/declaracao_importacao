@@ -514,12 +514,17 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
+            product = self.env['product.product'].browse(move_line.product_id.id)
+            default_code = product.product_tmpl_id.default_code or ''  # Pega o código do produto (default_code) do product_template
+
             # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
                 'product_id': move_line.product_id.id,
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
+                'nfe40_cProd': default_code,
+                # Preencher o código do produto (cProd) com default_code
                 'nfe40_choice_icms': 'nfe40_ICMSSN101',
                 'nfe40_choice_tipi': 'nfe40_IPINT',
                 'nfe40_choice_ipitrib': 'nfe40_pIPI',
