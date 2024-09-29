@@ -435,6 +435,8 @@ class L10nBrDiDeclaracao(models.Model):
         return cst_mapping.get(regime_tributario, {}).get(aliquota, '60')  # Retorna 00 por padrão
 
     def _generate_invoice(self):
+        # Garantir que fiscal_operation_id está atribuído
+        fiscal_operation_id = self.fiscal_operation_id.id if self.fiscal_operation_id else self._get_default_fiscal_operation_id()
         # Dados básicos da fatura
         invoice_vals = {
             'move_type': 'in_invoice',
@@ -444,7 +446,7 @@ class L10nBrDiDeclaracao(models.Model):
             'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
             'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
             'issuer': 'company',
-            'fiscal_operation_id': 4,  # self.fiscal_operation_id,
+            'fiscal_operation_id': fiscal_operation_id,
             'invoice_line_ids': [],
         }
 
