@@ -498,6 +498,17 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar a fatura
         invoice = self.env['account.move'].create(invoice_vals)
 
+        # Verificar se as linhas da fatura foram criadas
+        if not invoice.invoice_line_ids:
+            raise UserError(
+                "Nenhuma linha da fatura foi criada. Verifique o processo de criação das linhas.")
+
+        # Recuperar as linhas de account.move.line relacionadas ao invoice
+        account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
+
+        if not account_move_lines:
+            raise UserError("Nenhuma linha foi encontrada para a fatura gerada.")
+
         # Conectar a fatura criada com o documento fiscal
         fiscal_document = self.env['l10n_br_fiscal.document'].create({
             'partner_id': invoice.partner_id.id,
@@ -508,9 +519,6 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Atualizar o campo fiscal_document_id na fatura
         invoice.write({'fiscal_document_id': fiscal_document.id})
-
-        # Recuperar as linhas de account.move.line relacionadas ao invoice
-        account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
 
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
