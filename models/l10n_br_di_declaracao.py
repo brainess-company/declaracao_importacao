@@ -485,7 +485,7 @@ class L10nBrDiDeclaracao(models.Model):
                 'product_id': mercadoria.product_id.id,
                 'quantity': mercadoria.quantidade,
                 'price_unit': price_unit_full,
-                'tax_ids': [(6, 0, [adicao.icms_id.id, adicao.pis_id.id, adicao.cofins_id.id])],
+                #'tax_ids': [(6, 0, [adicao.icms_id.id, adicao.pis_id.id, adicao.cofins_id.id])],
             }
 
             # Adicionar a linha ao dicionário da fatura
