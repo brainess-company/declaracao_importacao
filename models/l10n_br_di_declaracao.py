@@ -533,68 +533,6 @@ class L10nBrDiDeclaracao(models.Model):
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
-            mercadorias = self.di_mercadoria_ids.filtered(
-                lambda m: m.product_id == move_line.product_id)
-
-            if not mercadorias:
-                raise ValueError("Nenhuma mercadoria correspondente ao product_id foi encontrada.")
-
-            # Agora faz loop sobre todas as mercadorias encontradas
-            for mercadoria in mercadorias:
-                adicao = self.di_adicao_ids.filtered(
-                    lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
-
-                # Calcular os campos fiscais adicionais
-                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
-
-                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
-                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
-                cofins_value = adicao.cofins_aliquota_valor_devido / 100
-                ii_value = adicao.ii_aliquota_valor_devido / 100
-                ipi_value = adicao.ipi_aliquota_valor_devido / 100
-                freight_value = adicao.frete_valor_reais
-                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-
-                # Calcular o valor total de impostos incluídos
-                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
-
-                pis_base = (mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
-                cofins_base = pis_base
-                ii_base = pis_base
-                ipi_base = pis_base + adicao.ii_aliquota_valor_devido / 100
-
-                # Atualizar os valores fiscais na linha fiscal já criada
-                fiscal_document_line.write({
-                    'amount_tax_included': amount_tax_included,
-                    'freight_value': freight_value,
-                    'other_value': other_value,
-                    'amount_tax_withholding': amount_tax_included,
-
-                    # PIS
-                    'pis_base': pis_base,
-                    'pis_percent': adicao.pis_pasep_aliquota_ad_valorem / 100,
-                    'pis_value': pis_value,
-
-                    # COFINS
-                    'cofins_base': cofins_base,
-                    'cofins_percent': adicao.cofins_aliquota_ad_valorem / 100,
-                    'cofins_value': cofins_value,
-
-                    # II IMPOSTO DE IMPORTAÇÃO
-                    'ii_base': ii_base,
-                    'ii_percent': adicao.ii_aliquota_ad_valorem / 100,
-                    'ii_value': adicao.ii_aliquota_valor_devido / 100,
-
-                    # ICMS
-                    'icms_value': proportional_icms,
-                    'icms_effective_value': proportional_icms,
-
-                    # IPI
-                    'ipi_base': ipi_base,
-                    'ipi_percent': adicao.ipi_aliquota_ad_valorem / 100,
-                    'ipi_value': ipi_value,
-                })
-
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
