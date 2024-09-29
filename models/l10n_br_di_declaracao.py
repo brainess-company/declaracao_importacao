@@ -462,7 +462,7 @@ class L10nBrDiDeclaracao(models.Model):
                 # Buscar os impostos no Odoo, filtrando pelo grupo correto
                 # Primeiro buscamos na tabela l10n_br_fiscal.tax e depois mapeamos para account.tax
                 icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('amount_percent', '=', float(12)),  # Alíquota de 12% para ICMS
+                    ('percent_amount', '=', 12),  # Alíquota de 12% para ICMS
                     ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)  # Grupo ICMS
                 ], limit=1)
 
@@ -473,7 +473,7 @@ class L10nBrDiDeclaracao(models.Model):
                     ], limit=1)
 
                 ipi_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('amount_percent', '=', adicao.ipi_aliquota_ad_valorem * 100),  # Alíquota do IPI extraída do XML
+                    ('percent_amount', '=', adicao.ipi_aliquota_ad_valorem * 100),  # Alíquota do IPI extraída do XML
                     ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)  # Grupo IPI
                 ], limit=1)
 
@@ -484,7 +484,7 @@ class L10nBrDiDeclaracao(models.Model):
                     ], limit=1)
 
                 pis_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('amount_percent', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
+                    ('percent_amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
                     ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)  # Grupo PIS
                 ], limit=1)
 
@@ -495,7 +495,7 @@ class L10nBrDiDeclaracao(models.Model):
                     ], limit=1)
 
                 cofins_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('amount_percent', '=', adicao.cofins_aliquota_ad_valorem * 100),  # Alíquota do COFINS extraída do XML
+                    ('percent_amount', '=', adicao.cofins_aliquota_ad_valorem * 100),  # Alíquota do COFINS extraída do XML
                     ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)  # Grupo COFINS
                 ], limit=1)
 
@@ -506,7 +506,7 @@ class L10nBrDiDeclaracao(models.Model):
                     ], limit=1)
 
                 ii_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
-                    ('amount_percent', '=', adicao.ii_aliquota_ad_valorem * 100),  # Alíquota do II extraída do XML
+                    ('percent_amount', '=', adicao.ii_aliquota_ad_valorem * 100),  # Alíquota do II extraída do XML
                     ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)  # Grupo II
                 ], limit=1)
 
