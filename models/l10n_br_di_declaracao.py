@@ -459,7 +459,7 @@ class L10nBrDiDeclaracao(models.Model):
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
-                # Obter valores de impostos diretamente da tabela l10n_br_fiscal_tax
+                # Buscar os impostos diretamente da tabela l10n_br_fiscal_tax
                 icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', 12),
                     ('tax_domain', '=', 'icms')
@@ -485,7 +485,7 @@ class L10nBrDiDeclaracao(models.Model):
                     ('tax_domain', '=', 'ii')
                 ], limit=1)
 
-                # Armazenar os IDs dos impostos da tabela l10n_br_fiscal_tax
+                # Armazenar os IDs dos impostos
                 tax_ids = []
                 if icms_fiscal_tax:
                     tax_ids.append(icms_fiscal_tax.id)
@@ -514,28 +514,16 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full
 
-        # Salvar a fatura e as linhas
+                # Usar a função apropriada para associar os impostos ao movimento
+                line_form.tax_ids = [(6, 0, tax_ids)]  # Mapeando os IDs diretamente de l10n_br_fiscal_tax
+
+        # Salvar a fatura e retornar a ação para exibição
         invoice = move_form.save()
-
-        # Agora, após salvar a fatura, atribuimos os impostos diretamente nas linhas reais do modelo `account.move.line`
-        for line in invoice.invoice_line_ids:
-            # Obter o produto correspondente para filtrar os impostos
-            mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == line.product_id)
-            if mercadoria:
-                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids)
-                if adicao:
-                    # Atribuir os impostos usando write
-                    line.write({'tax_ids': [(6, 0, tax_ids)]})
-
-        # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
-        
-        # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
-
 
 
 
