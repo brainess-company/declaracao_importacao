@@ -460,35 +460,62 @@ class L10nBrDiDeclaracao(models.Model):
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
                 # Buscar os impostos no Odoo, filtrando pelo grupo correto
-                icms_tax_id = self.env['account.tax'].search([
-                    ('amount', '=', 12),
-                    ('type_tax_use', '=', 'purchase'),
-                    ('l10n_br_fiscal_tax_id.tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)
+                # Primeiro buscamos na tabela l10n_br_fiscal.tax e depois mapeamos para account.tax
+                icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
+                    ('amount_percent', '=', 12),  # Alíquota de 12% para ICMS
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)  # Grupo ICMS
                 ], limit=1)
 
-                ipi_tax_id = self.env['account.tax'].search([
-                    ('amount', '=', adicao.ipi_aliquota_ad_valorem * 100),
-                    ('type_tax_use', '=', 'purchase'),
-                    ('l10n_br_fiscal_tax_id.tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)
+                if icms_fiscal_tax:
+                    icms_tax_id = self.env['account.tax'].search([
+                        ('l10n_br_fiscal_tax_id', '=', icms_fiscal_tax.id),
+                        ('type_tax_use', '=', 'purchase')
+                    ], limit=1)
+
+                ipi_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
+                    ('amount_percent', '=', adicao.ipi_aliquota_ad_valorem * 100),  # Alíquota do IPI extraída do XML
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)  # Grupo IPI
                 ], limit=1)
 
-                pis_tax_id = self.env['account.tax'].search([
-                    ('amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),
-                    ('type_tax_use', '=', 'purchase'),
-                    ('l10n_br_fiscal_tax_id.tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)
+                if ipi_fiscal_tax:
+                    ipi_tax_id = self.env['account.tax'].search([
+                        ('l10n_br_fiscal_tax_id', '=', ipi_fiscal_tax.id),
+                        ('type_tax_use', '=', 'purchase')
+                    ], limit=1)
+
+                pis_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
+                    ('amount_percent', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),  # Alíquota do PIS extraída do XML
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)  # Grupo PIS
                 ], limit=1)
 
-                cofins_tax_id = self.env['account.tax'].search([
-                    ('amount', '=', adicao.cofins_aliquota_ad_valorem * 100),
-                    ('type_tax_use', '=', 'purchase'),
-                    ('l10n_br_fiscal_tax_id.tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)
+                if pis_fiscal_tax:
+                    pis_tax_id = self.env['account.tax'].search([
+                        ('l10n_br_fiscal_tax_id', '=', pis_fiscal_tax.id),
+                        ('type_tax_use', '=', 'purchase')
+                    ], limit=1)
+
+                cofins_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
+                    ('amount_percent', '=', adicao.cofins_aliquota_ad_valorem * 100),  # Alíquota do COFINS extraída do XML
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)  # Grupo COFINS
                 ], limit=1)
 
-                ii_tax_id = self.env['account.tax'].search([
-                    ('amount', '=', adicao.ii_aliquota_ad_valorem * 100),
-                    ('type_tax_use', '=', 'purchase'),
-                    ('l10n_br_fiscal_tax_id.tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)
+                if cofins_fiscal_tax:
+                    cofins_tax_id = self.env['account.tax'].search([
+                        ('l10n_br_fiscal_tax_id', '=', cofins_fiscal_tax.id),
+                        ('type_tax_use', '=', 'purchase')
+                    ], limit=1)
+
+                ii_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
+                    ('amount_percent', '=', adicao.ii_aliquota_ad_valorem * 100),  # Alíquota do II extraída do XML
+                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)  # Grupo II
                 ], limit=1)
+
+                if ii_fiscal_tax:
+                    ii_tax_id = self.env['account.tax'].search([
+                        ('l10n_br_fiscal_tax_id', '=', ii_fiscal_tax.id),
+                        ('type_tax_use', '=', 'purchase')
+                    ], limit=1)
+
 
                 # Armazenar os IDs dos impostos
                 tax_ids = []
