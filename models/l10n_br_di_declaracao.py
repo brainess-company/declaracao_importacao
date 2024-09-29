@@ -451,30 +451,38 @@ class L10nBrDiDeclaracao(models.Model):
                 # Calcular ICMS proporcional
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
+                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+                cofins_value = adicao.cofins_aliquota_valor_devido / 100
+                ii_value = adicao.ii_aliquota_valor_devido / 100
+                ipi_value = adicao.ipi_aliquota_valor_devido / 100
+                freight_value = adicao.frete_valor_reais
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+
                 # Obter valores de impostos diretamente da tabela l10n_br_fiscal_tax
                 icms_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', 12),
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_icms').id)
+                    ('tax_domain', '=', 'icms')
                 ], limit=1)
 
                 ipi_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', adicao.ipi_aliquota_ad_valorem * 100),
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ipi').id)
+                    ('tax_domain', '=', 'ipi')
                 ], limit=1)
 
                 pis_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', adicao.pis_pasep_aliquota_ad_valorem * 100),
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_pis').id)
+                    ('tax_domain', '=', 'pis')
                 ], limit=1)
 
                 cofins_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', adicao.cofins_aliquota_ad_valorem * 100),
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_cofins').id)
+                    ('tax_domain', '=', 'cofins')
                 ], limit=1)
 
                 ii_fiscal_tax = self.env['l10n_br_fiscal.tax'].search([
                     ('percent_amount', '=', adicao.ii_aliquota_ad_valorem * 100),
-                    ('tax_group_id', '=', self.env.ref('l10n_br_fiscal.tax_group_ii').id)
+                    ('tax_domain', '=', 'ii')
                 ], limit=1)
 
                 # Armazenar os IDs dos impostos da tabela l10n_br_fiscal_tax
