@@ -527,11 +527,12 @@ class L10nBrDiDeclaracao(models.Model):
                 raise UserError(
                     f"A linha da fatura não possui um produto definido. Verifique as linhas da fatura.")
 
+            # Verifique se o `default_code` está disponível
             if not product.default_code:
                 raise UserError(
                     f"O produto {product.name} não possui um código interno (default_code).")
 
-            # Criar a linha do documento fiscal com os valores especificados
+            # Criar a linha do documento fiscal com o `default_code`
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
                 'product_id': product.id,
