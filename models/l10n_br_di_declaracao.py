@@ -530,6 +530,15 @@ class L10nBrDiDeclaracao(models.Model):
                 'nfe40_choice_imposto': 'nfe40_ICMS',
             })
 
+            # Verificação e atribuição das strings corretas para campos
+            for field_name in ['nfe40_choice_icms', 'nfe40_choice_tipi', 'nfe40_choice_ipitrib',
+                               'nfe40_choice_pis', 'nfe40_choice_pisoutr', 'nfe40_choice_cofins',
+                               'nfe40_choice_cofinsoutr', 'nfe40_choice_imposto']:
+                value = getattr(fiscal_document_line, field_name, False)
+                if isinstance(value, bool):  # Corrigir valor booleano inesperado
+                    setattr(fiscal_document_line, field_name,
+                            'nfe40_ICMSSN101' if field_name == 'nfe40_choice_icms' else 'nfe40_ICMS')
+
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
