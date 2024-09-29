@@ -498,27 +498,32 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar a fatura
         invoice = self.env['account.move'].create(invoice_vals)
 
-        # Conectar a fatura com o documento fiscal (usando o campo fiscal_document_id)
-        invoice.write({
-            'fiscal_document_id': self.env['l10n_br_fiscal.document'].create({
-                'partner_id': invoice.partner_id.id,
-                'document_type_id': invoice.document_type_id.id,
-                'document_serie_id': invoice.document_serie_id.id,
-                'fiscal_operation_id': fiscal_operation_id,
-            }).id
+        # Conectar a fatura criada com o documento fiscal
+        fiscal_document = self.env['l10n_br_fiscal.document'].create({
+            'partner_id': invoice.partner_id.id,
+            'document_type_id': invoice.document_type_id.id,
+            'document_serie_id': invoice.document_serie_id.id,
+            'fiscal_operation_id': fiscal_operation_id,
         })
+
+        # Atualizar o campo fiscal_document_id na fatura
+        invoice.write({'fiscal_document_id': fiscal_document.id})
 
         # Recuperar as linhas de account.move.line relacionadas ao invoice
         account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
 
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
-            self.env['l10n_br_fiscal.document.line'].create({
-                'fiscal_document_line_id': move_line.id,  # Relacionar a linha de fatura
+            # Criar a linha do documento fiscal
+            fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
+                'document_id': fiscal_document.id,
                 'product_id': move_line.product_id.id,
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
             })
+
+            # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
+            move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
