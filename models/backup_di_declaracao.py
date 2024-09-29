@@ -502,7 +502,6 @@ class L10nBrDiDeclaracao(models.Model):
                                                     line.quantity == fiscal_line.quantity and
                                                     line.price_unit == fiscal_line.price_unit).ensure_one()
 
-            # Filtrar a mercadoria correspondente com base no product_id
             mercadoria = self.di_mercadoria_ids.filtered(
                 lambda m: m.product_id == move_line.product_id).ensure_one()
 
@@ -528,6 +527,7 @@ class L10nBrDiDeclaracao(models.Model):
 
             # Calcular o valor total de impostos incluídos
             amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+            # Filtrar a mercadoria correspondente com base no product_id
 
             # Atualizar os valores da linha fiscal
             fiscal_line_vals = {

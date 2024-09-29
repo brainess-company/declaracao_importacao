@@ -37,14 +37,11 @@ account_move_line
 -- l10n_br_fiscal_document_line
 ----(freight_value, )
 
+ACCOUNT MOVE
+account_move.partner_shipping_id = ATRIBUIR VALOR A ESSE CAMPO
+account_move.is_cnab = False SETAR COMO FALSE
 
-eu tenho q criar o campo no untils e depois instanciar ele no l10n_br_di_declaracao
-ele vai ficar no objeto: O campo "agencia_icms" não existe no modelo "declaracao_importacao.declaracao"
-e tenho q incluir ele na lista de valores da def importa_declaracao
 
 
-agora criei a fatura, relacionou um account move com um l10n_br_fiscal_document 
-mas não preencheu varios campos do l10n_br_fiscal_document
-e não relacionou um account move line com um l10n_br_fiscal_document_line
-
-o campo fiscal_tax_ids quando da preenchido da certo, mas quando eu crio a relação com as linhas ai da errado
+ERRO
+The product False must have a default code or the product codeline field (nfe40_cProd) should be filled.
