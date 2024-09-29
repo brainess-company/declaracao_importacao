@@ -420,18 +420,25 @@ class L10nBrDiDeclaracao(models.Model):
 
 
     def _generate_invoice(self):
-        # Dados básicos da fatura
-        invoice_vals = {
-            'move_type': 'in_invoice',
-            'invoice_date': fields.Date.today(),
-            'date': fields.Date.today(),
-            'partner_id': self.di_adicao_ids[0].fornecedor_partner_id.id,
-            'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
-            'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
-            'issuer': 'company',
-            'fiscal_operation_id': self.fiscal_operation_id.id,
-            'invoice_line_ids': [],
-        }
+        # Criamos a fatura com o Form para garantir que todos os gatilhos sejam disparados
+        move_form = Form(
+            self.env["account.move"].with_context(
+                default_move_type="in_invoice",
+                account_predictive_bills_disable_prediction=True,
+                # Desabilitar o cálculo automático de impostos
+                force_company=self.env.company.id,
+                fiscal_tax_calculation_method="manual",
+            )
+        )
+
+        # Definir as informações básicas da fatura
+        move_form.invoice_date = fields.Date.today()
+        move_form.date = move_form.invoice_date
+        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
+        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
+        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
+        move_form.issuer = "company"
+        move_form.fiscal_operation_id = self.fiscal_operation_id
 
         # Calcular a quantidade total para uso no cálculo do ICMS
         total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
@@ -439,44 +446,46 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
-            # Obter a adição correspondente à mercadoria
-            adicao = self.di_adicao_ids.filtered(
-                lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+            with move_form.invoice_line_ids.new() as line_form:
+                # Obter a adição correspondente à mercadoria
+                adicao = self.di_adicao_ids.filtered(
+                    lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
 
-            # Calcular o ICMS proporcional
-            proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
+                # Calcular o ICMS proporcional
+                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
-            # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
-            pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
-            cofins_value = adicao.cofins_aliquota_valor_devido / 100
-            ii_value = adicao.ii_aliquota_valor_devido / 100
-            ipi_value = adicao.ipi_aliquota_valor_devido / 100
-            freight_value = adicao.frete_valor_reais
-            other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+                cofins_value = adicao.cofins_aliquota_valor_devido / 100
+                ii_value = adicao.ii_aliquota_valor_devido / 100
+                ipi_value = adicao.ipi_aliquota_valor_devido / 100
+                freight_value = adicao.frete_valor_reais
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
-            # Calcular o valor total de impostos incluídos
-            amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+                # Calcular o valor total de impostos incluídos
+                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
 
-            # Calcular o preço unitário completo (valor unitário + frete proporcional + impostos)
-            price_unit_full = (
-                mercadoria.final_price_unit +  # Valor unitário original
-                (freight_value / mercadoria.quantidade) +  # Frete proporcional
-                (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
-                (amount_tax_included / mercadoria.quantidade)  # Impostos incluídos
-            )
+                # Calcular o preço unitário completo (valor unitário + frete proporcional + impostos)
+                price_unit_full = (
+                    mercadoria.final_price_unit +  # Valor unitário original
+                    (freight_value / mercadoria.quantidade) +  # Frete proporcional
+                    (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
+                    (amount_tax_included / mercadoria.quantidade)  # Impostos incluídos
+                )
 
-            # Preparar a linha da fatura, sem os tax_ids
-            invoice_line_vals = {
-                'product_id': mercadoria.product_id.id,
-                'quantity': mercadoria.quantidade,
-                'price_unit': price_unit_full,
-            }
+                # Atribuir o valor completo ao price_unit da linha
+                line_form.product_id = mercadoria.product_id
+                line_form.quantity = mercadoria.quantidade
+                line_form.price_unit = price_unit_full
 
-            # Adicionar a linha ao dicionário da fatura
-            invoice_vals['invoice_line_ids'].append((0, 0, invoice_line_vals))
+                # Manipular o campo Many2many tax_ids corretamente usando o proxy apropriado
+                line_form.tax_ids.clear()  # Limpar quaisquer impostos existentes
+                line_form.tax_ids.add(adicao.icms_id)
+                line_form.tax_ids.add(adicao.pis_id)
+                line_form.tax_ids.add(adicao.cofins_id)
 
-        # Criar a fatura
-        invoice = self.env['account.move'].create(invoice_vals)
+        # Salvar a fatura e obter a referência
+        invoice = move_form.save()
 
         # Recuperar as linhas de account.move.line relacionadas ao invoice
         account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
