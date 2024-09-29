@@ -514,19 +514,27 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full
 
-            # Após salvar a linha do produto, atribua os impostos usando write no campo tax_ids
-            if tax_ids:
-                line_form.save()
-                line_form.write({'tax_ids': [(6, 0, tax_ids)]})
-
-        # Salvar a fatura e retornar a ação para exibição
+        # Salvar a fatura e as linhas
         invoice = move_form.save()
+
+        # Agora, após salvar a fatura, atribuimos os impostos diretamente nas linhas reais do modelo `account.move.line`
+        for line in invoice.invoice_line_ids:
+            # Obter o produto correspondente para filtrar os impostos
+            mercadoria = self.di_mercadoria_ids.filtered(lambda m: m.product_id == line.product_id)
+            if mercadoria:
+                adicao = self.di_adicao_ids.filtered(lambda a: mercadoria in a.di_adicao_mercadoria_ids)
+                if adicao:
+                    # Atribuir os impostos usando write
+                    line.write({'tax_ids': [(6, 0, tax_ids)]})
+
+        # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
+        
+        # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action["domain"] = [("id", "=", invoice.id)]
 
         return action
-
 
 
 
