@@ -442,6 +442,8 @@ class L10nBrDiDeclaracao(models.Model):
             'move_type': 'in_invoice',
             'invoice_date': fields.Date.today(),
             'date': fields.Date.today(),
+            'document_date': fields.Date.today(),
+            'ind_final': 0,
             'partner_id': self.di_adicao_ids[0].fornecedor_partner_id.id,
             'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
             'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
