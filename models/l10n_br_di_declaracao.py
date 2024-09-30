@@ -554,7 +554,7 @@ class L10nBrDiDeclaracao(models.Model):
 
             # Atualizar o campo de frete da linha fiscal com o frete da mercadoria
             fiscal_document_line.write({
-                'freight_value': mercadoria.frete_valor_reais
+                'freight_value': mercadoria.adicao.frete_valor_reais
             })
 
         # Atualizar o estado do documento para "locked"
