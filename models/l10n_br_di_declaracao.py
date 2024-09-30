@@ -446,10 +446,13 @@ class L10nBrDiDeclaracao(models.Model):
             'document_date': fields.Date.today(),
             'ind_final': 0,  # Definindo ind_final como False
             'partner_id': self.di_adicao_ids[0].fornecedor_partner_id.id,
+            'partner_shipping_id': self.di_adicao_ids[0].fornecedor_partner_id.id,
+            # Definindo o mesmo parceiro para entrega
             'document_type_id': self.env.ref("l10n_br_fiscal.document_55").id,
             'document_serie_id': self.env.ref("l10n_br_fiscal.document_55_serie_1").id,
             'issuer': 'company',
             'fiscal_operation_id': fiscal_operation_id,
+            'is_cnab': False,  # Definindo o valor is_cnab como False
             'invoice_line_ids': [],
         }
 
