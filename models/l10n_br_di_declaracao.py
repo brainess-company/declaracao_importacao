@@ -539,7 +539,6 @@ class L10nBrDiDeclaracao(models.Model):
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
         # NOVO TRECHO DO CODIGO
-        # NOVO TRECHO DO CÓDIGO
         # Para cada mercadoria, associar o frete correto à linha fiscal
         for mercadoria in self.di_mercadoria_ids:
             # Obter a adição correspondente à mercadoria novamente
