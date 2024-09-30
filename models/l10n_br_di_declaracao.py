@@ -538,13 +538,14 @@ class L10nBrDiDeclaracao(models.Model):
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
-            # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
-            fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search(
-                [('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))])
+        # teste
+        # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
+        fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search(
+            [('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))])
 
             # Atualizar os valores das linhas fiscais com base no dicionário fiscal_line_vals
-            for fiscal_line in fiscal_document_lines:
-                # Encontre a linha de move correspondente com base em product_id, quantity e price_unit
+        for fiscal_line in fiscal_document_lines:
+            # Encontre a linha de move correspondente com base em product_id, quantity e price_unit
                 move_line = account_move_lines.filtered(lambda line:
                                                         line.product_id == fiscal_line.product_id and
                                                         line.quantity == fiscal_line.quantity and
