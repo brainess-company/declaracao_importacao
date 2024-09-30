@@ -540,22 +540,23 @@ class L10nBrDiDeclaracao(models.Model):
 
         # NOVO TRECHO DO CODIGO
         # NOVO TRECHO DO CÓDIGO
+        # Para cada mercadoria, associar o frete correto à linha fiscal
         for mercadoria in self.di_mercadoria_ids:
-            # Recuperar a linha fiscal relacionada ao product_id da mercadoria
+            # Obter a adição correspondente à mercadoria novamente
+            adicao = self.di_adicao_ids.filtered(
+                lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+
+            # Encontrar a linha do documento fiscal correspondente
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].search([
                 ('document_id', '=', fiscal_document.id),
                 ('product_id', '=', mercadoria.product_id.id)
-            ], limit=1)  # Certifica-se de obter apenas uma linha correspondente
+            ], limit=1)
 
-            # Verificar se a linha fiscal foi encontrada
-            if not fiscal_document_line:
-                raise ValueError(
-                    f"Não foi encontrada linha fiscal para o produto {mercadoria.product_id.name}")
-
-            # Atualizar o campo de frete da linha fiscal com o frete da mercadoria
-            fiscal_document_line.write({
-                'freight_value': mercadoria.adicao.frete_valor_reais
-            })
+            # Atualizar o valor de frete na linha fiscal
+            if fiscal_document_line:
+                fiscal_document_line.write({
+                    'freight_value': adicao.frete_valor_reais
+                })
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
