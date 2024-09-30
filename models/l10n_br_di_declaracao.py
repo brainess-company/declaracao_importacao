@@ -516,7 +516,25 @@ class L10nBrDiDeclaracao(models.Model):
         for move_line in account_move_lines:
             product = self.env['product.product'].browse(move_line.product_id.id)
             default_code = product.product_tmpl_id.default_code or ''  # Pega o código do produto (default_code) do product_template
+            # VERIFICAR AQUI
+            # Verificar se há mais de uma mercadoria correspondente
+            mercadorias_filtradas = self.di_mercadoria_ids.filtered(
+                lambda m: m.product_id == move_line.product_id)
 
+            if len(mercadorias_filtradas) > 1:
+                raise ValueError("Mais de uma mercadoria encontrada para o product_id.")
+
+            mercadoria = mercadorias_filtradas.ensure_one()
+
+            # Verificar se há mais de uma adição correspondente
+            adicoes_filtradas = self.di_adicao_ids.filtered(
+                lambda a: mercadoria in a.di_adicao_mercadoria_ids)
+
+            if len(adicoes_filtradas) > 1:
+                raise ValueError("Mais de uma adição encontrada para a mercadoria.")
+
+            adicao = adicoes_filtradas.ensure_one()
+            # TERMINAR DE FERIFICAR
             # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
@@ -538,83 +556,6 @@ class L10nBrDiDeclaracao(models.Model):
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
-        # teste
-        # Agora, recuperar as linhas de fiscal_document_line associadas a essas linhas de conta
-        fiscal_document_lines = self.env['l10n_br_fiscal.document.line'].search(
-            [('id', 'in', account_move_lines.mapped('fiscal_document_line_id.id'))])
-
-            # Atualizar os valores das linhas fiscais com base no dicionário fiscal_line_vals
-        for fiscal_line in fiscal_document_lines:
-            # Encontre a linha de move correspondente com base em product_id, quantity e price_unit
-                move_line = account_move_lines.filtered(lambda line:
-                                                        line.product_id == fiscal_line.product_id and
-                                                        line.quantity == fiscal_line.quantity and
-                                                        line.price_unit == fiscal_line.price_unit).ensure_one()
-
-                mercadoria = self.di_mercadoria_ids.filtered(
-                    lambda m: m.product_id == move_line.product_id).ensure_one()
-
-                # Encontrar a adição correspondente à mercadoria
-                adicao = self.di_adicao_ids.filtered(
-                    lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
-
-                # Calcular o ICMS proporcional
-                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
-
-                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
-                pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem / 100
-                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
-                cofins_value = adicao.cofins_aliquota_valor_devido / 100
-                cofins_aliquota = adicao.cofins_aliquota_ad_valorem / 100
-                ii_aliquota = adicao.ii_aliquota_ad_valorem / 100
-                ii_value = adicao.ii_aliquota_valor_devido / 100
-                ipi_aliquota = adicao.ipi_aliquota_ad_valorem / 100
-                ipi_value = adicao.ipi_aliquota_valor_devido / 100
-                freight_value = adicao.frete_valor_reais
-                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-                produto_cfrete = (
-                                         mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
-
-                # Calcular o valor total de impostos incluídos
-                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
-                # Filtrar a mercadoria correspondente com base no product_id
-
-                # Atualizar os valores da linha fiscal
-                fiscal_line_vals = {
-                    'price_unit': mercadoria.final_price_unit,
-                    'quantity': mercadoria.quantidade,
-                    'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
-                    'amount_tax_included': amount_tax_included,
-                    'freight_value': freight_value,
-                    'other_value': other_value,
-                    'amount_tax_withholding': amount_tax_included,
-
-                    # PIS
-                    'pis_base': produto_cfrete,
-                    'pis_percent': pis_pasep_aliquota,
-                    'pis_value': pis_value,
-
-                    # COFINS
-                    'cofins_base': produto_cfrete,
-                    'cofins_percent': cofins_aliquota,
-                    'cofins_value': cofins_value,
-
-                    # II IMPOSTO DE IMPORTAÇÃO
-                    'ii_base': produto_cfrete,
-                    'ii_percent': ii_aliquota,
-                    'ii_value': ii_value,
-
-                    # ICMS
-                    'icms_value': proportional_icms,
-                    'icms_effective_value': proportional_icms,
-
-                    # IPI
-                    'ipi_base': produto_cfrete + ii_value,
-                    'ipi_percent': ipi_aliquota,
-                    'ipi_value': ipi_value,
-                }
-
-                fiscal_line.write(fiscal_line_vals)
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
