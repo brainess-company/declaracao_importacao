@@ -511,11 +511,7 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Atualizar o campo fiscal_document_id na fatura
         invoice.write({'fiscal_document_id': fiscal_document.id})
-        # Forçar o valor correto de ind_final após a criação do documento fiscal
-        fiscal_document.write({'ind_final': 0})
 
-
-        # Recuperar as linhas de account.move.line relacionadas ao invoice
         # Recuperar as linhas de account.move.line relacionadas ao invoice e que não estão excluídas da aba de fatura
         account_move_lines = self.env['account.move.line'].search([
             ('move_id', '=', invoice.id),
@@ -552,8 +548,7 @@ class L10nBrDiDeclaracao(models.Model):
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
-        # Forçar o valor correto de ind_final após a criação do documento fiscal
-        fiscal_document.write({'ind_final': 0})
+
 
         # NOVO TRECHO DO CODIGO
         # Para cada mercadoria, associar o frete correto à linha fiscal
@@ -624,6 +619,8 @@ class L10nBrDiDeclaracao(models.Model):
                 })
 
         # Atualizar o estado do documento para "locked"
+        # Forçar o valor correto de ind_final após a criação do documento fiscal
+        fiscal_document.write({'ind_final': 0})
         self.write({"account_move_id": invoice.id, "state": "locked"})
         # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
