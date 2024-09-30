@@ -642,9 +642,9 @@ class L10nBrDiDeclaracao(models.Model):
                     'ipi_tax_id': product.product_tmpl_id.ncm_id.tax_ipi_id.id if product.product_tmpl_id.ncm_id.tax_ipi_id else None,
                     'ii_tax_id': product.product_tmpl_id.ncm_id.tax_ii_id.id if product.product_tmpl_id.ncm_id.tax_ii_id else None,
 
-                    'icms_cst_id': product.product_tmpl_id.ncm_id.tax_definition_id.icms_cst_id.id if product.product_tmpl_id.ncm_id.tax_definition_id.icms_cst_id else None,
-                    'cofins_tax_id': product.product_tmpl_id.ncm_id.tax_definition_id.cofins_tax_id.id if product.product_tmpl_id.ncm_id.tax_definition_id.cofins_tax_id else None,
-                    'pis_tax_id': product.product_tmpl_id.ncm_id.tax_definition_id.pis_tax_id.id if product.product_tmpl_id.ncm_id.tax_definition_id.pis_tax_id else None,
+                    #'icms_cst_id': product.product_tmpl_id.ncm_id.tax_definition_id.icms_cst_id.id if product.product_tmpl_id.ncm_id.tax_definition_id.icms_cst_id else None,
+                    #'cofins_tax_id': product.product_tmpl_id.ncm_id.tax_definition_id.cofins_tax_id.id if product.product_tmpl_id.ncm_id.tax_definition_id.cofins_tax_id else None,
+                    #'pis_tax_id': product.product_tmpl_id.ncm_id.tax_definition_id.pis_tax_id.id if product.product_tmpl_id.ncm_id.tax_definition_id.pis_tax_id else None,
                 })
 
     # Finalizar a fatura e atualizar o estado
