@@ -418,44 +418,46 @@ class L10nBrDiDeclaracao(models.Model):
         if any(not line_id.product_id for line_id in self.di_mercadoria_ids):
             raise UserError(_("One or more import lines is missing a product ID."))
 
-    def _generate_invoice(self):
-        # Criar a fatura com o Form para garantir que todos os gatilhos sejam disparados
+    def _generate_vendor_invoice(self):
+        # Criar a fatura de fornecedor no Form com contexto específico
         move_form = Form(self.env["account.move"].with_context(default_move_type="in_invoice"))
 
-        # Definir informações básicas da fatura
-        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
-        move_form.invoice_date = fields.Date.today()
-        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
-        move_form.fiscal_operation_id = self.fiscal_operation_id
-        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
+        # Definir os campos principais
+        move_form.partner_id = self.partner_id  # Parceiro fornecedor
+        move_form.invoice_date = fields.Date.today()  # Data da fatura
+        move_form.date = fields.Date.today()  # Data de lançamento
+        move_form.ref = self.name  # Referência interna
 
-        # Adicionar as linhas da fatura com campos fiscais
-        for mercadoria in self.di_mercadoria_ids:
+        # Informações fiscais
+        move_form.fiscal_operation_id = self.fiscal_operation_id  # Operação fiscal
+        move_form.document_type_id = self.env.ref(
+            "l10n_br_fiscal.document_55")  # Tipo de documento (NF-e)
+        move_form.document_serie_id = self.env.ref(
+            "l10n_br_fiscal.document_55_serie_1")  # Série do documento
+        move_form.fiscal_position_id = self.fiscal_position_id  # Posição fiscal do fornecedor
+
+        # Outras informações
+        move_form.currency_id = self.env.user.company_id.currency_id  # Moeda
+        move_form.company_id = self.env.user.company_id  # Empresa atual
+
+        # Adicionar as linhas de fatura (produtos/serviços)
+        for line in self.invoice_line_ids:
             with move_form.invoice_line_ids.new() as line_form:
-                line_form.product_id = mercadoria.product_id
-                line_form.quantity = mercadoria.quantidade
-                line_form.price_unit = mercadoria.final_price_unit
+                line_form.product_id = line.product_id  # Produto/Serviço
+                line_form.quantity = line.quantity  # Quantidade
+                line_form.price_unit = line.price_unit  # Preço unitário
+                line_form.account_id = line.account_id  # Conta contábil
+                line_form.name = line.name  # Descrição da linha
 
-                # Recuperar e definir impostos diretamente do produto e NCM
-                fiscal_position = self.env['account.fiscal.position'].get_fiscal_position(
-                    move_form.partner_id.id, mercadoria.product_id.id, self.fiscal_operation_id)
+                # Informações fiscais por linha
+                line_form.tax_ids.clear()  # Limpar impostos predefinidos
+                for tax in line.tax_ids:
+                    line_form.tax_ids.add(tax)  # Adicionar os impostos correspondentes
+                line_form.fiscal_operation_line_id = line.fiscal_operation_line_id  # Operação fiscal por linha
+                line_form.cfop_id = line.cfop_id  # CFOP
 
-                # Atribuir os impostos à linha
-                line_form.tax_ids.clear()  # Limpar os impostos predefinidos
-                line_form.tax_ids.add(
-                    fiscal_position.tax_id)  # Adicionar impostos da posição fiscal
-
-                # Definir o CFOP, NCM e demais campos fiscais
-                line_form.cfop_id = self.fiscal_operation_id.cfop_id  # Se aplicável
-                line_form.ncm_id = mercadoria.product_id.product_tmpl_id.ncm_id
-                line_form.icms_cst_id = self.fiscal_operation_id.icms_cst_id  # CST ICMS
-                line_form.pis_cst_id = self.fiscal_operation_id.pis_cst_id  # CST PIS
-                line_form.cofins_cst_id = self.fiscal_operation_id.cofins_cst_id  # CST COFINS
-
-        # Salvar a fatura
+        # Salvar a fatura de fornecedor
         invoice = move_form.save()
-
-        return invoice
 
     def _get_invoice_action(self, invoice):
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
