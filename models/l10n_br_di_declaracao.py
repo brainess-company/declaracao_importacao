@@ -544,6 +544,25 @@ class L10nBrDiDeclaracao(models.Model):
             # Obter a adição correspondente à mercadoria novamente
             adicao = self.di_adicao_ids.filtered(
                 lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
+            # Calcular o ICMS proporcional
+            proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
+
+            # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+            pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem / 100
+            pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+            cofins_value = adicao.cofins_aliquota_valor_devido / 100
+            cofins_aliquota = adicao.cofins_aliquota_ad_valorem / 100
+            ii_aliquota = adicao.ii_aliquota_ad_valorem / 100
+            ii_value = adicao.ii_aliquota_valor_devido / 100
+            ipi_aliquota = adicao.ipi_aliquota_ad_valorem / 100
+            ipi_value = adicao.ipi_aliquota_valor_devido / 100
+            freight_value = adicao.frete_valor_reais
+            other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+            produto_cfrete = (mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
+
+            # Calcular o valor total de impostos incluídos
+            amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+            # Filtrar a mercadoria correspondente com base no product_id
 
             # Encontrar a linha do documento fiscal correspondente
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].search([
@@ -554,7 +573,37 @@ class L10nBrDiDeclaracao(models.Model):
             # Atualizar o valor de frete na linha fiscal
             if fiscal_document_line:
                 fiscal_document_line.write({
-                    'freight_value': adicao.frete_valor_reais
+                    'price_unit': mercadoria.final_price_unit,
+                    'quantity': mercadoria.quantidade,
+                    'amount_tax_not_included': mercadoria.quantidade * mercadoria.final_price_unit,
+                    'amount_tax_included': amount_tax_included,
+                    'freight_value': freight_value,
+                    'other_value': other_value,
+                    'amount_tax_withholding': amount_tax_included,
+
+                    # PIS
+                    'pis_base': produto_cfrete,
+                    'pis_percent': pis_pasep_aliquota,
+                    'pis_value': pis_value,
+
+                    # COFINS
+                    'cofins_base': produto_cfrete,
+                    'cofins_percent': cofins_aliquota,
+                    'cofins_value': cofins_value,
+
+                    # II IMPOSTO DE IMPORTAÇÃO
+                    'ii_base': produto_cfrete,
+                    'ii_percent': ii_aliquota,
+                    'ii_value': ii_value,
+
+                    # ICMS
+                    'icms_value': proportional_icms,
+                    'icms_effective_value': proportional_icms,
+
+                    # IPI
+                    'ipi_base': produto_cfrete + ii_value,
+                    'ipi_percent': ipi_aliquota,
+                    'ipi_value': ipi_value,
                 })
 
         # Atualizar o estado do documento para "locked"
