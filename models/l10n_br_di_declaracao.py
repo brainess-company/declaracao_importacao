@@ -418,7 +418,7 @@ class L10nBrDiDeclaracao(models.Model):
         if any(not line_id.product_id for line_id in self.di_mercadoria_ids):
             raise UserError(_("One or more import lines is missing a product ID."))
 
-    def _generate_vendor_invoice(self):
+    def _generate_invoice(self):
         # Criar a fatura de fornecedor no Form com contexto específico
         move_form = Form(self.env["account.move"].with_context(default_move_type="in_invoice"))
 
