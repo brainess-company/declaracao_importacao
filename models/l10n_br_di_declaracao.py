@@ -434,8 +434,76 @@ class L10nBrDiDeclaracao(models.Model):
 
         return cst_mapping.get(regime_tributario, {}).get(aliquota, '60')  # Retorna 00 por padrão
 
+    from odoo.tests.common import Form
 
     def _generate_invoice(self):
+        # Criar a fatura com o Form para garantir que todos os gatilhos sejam disparados
+        move_form = Form(self.env["account.move"].with_context(default_move_type="in_invoice"))
+
+        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
+        move_form.partner_shipping_id = self.di_adicao_ids[
+            0].fornecedor_partner_id  # Definir o parceiro de entrega
+        move_form.invoice_date = fields.Date.today()
+        move_form.date = fields.Date.today()  # Data da fatura
+        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
+        move_form.fiscal_operation_id = self.fiscal_operation_id
+        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
+        move_form.ind_final = 0  # Indica que não é um consumidor final
+        move_form.is_cnab = False  # Definir o campo is_cnab como False
+
+        # Adicionar as linhas da fatura
+        total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
+        total_icms = float(self.valor_total_icms)
+
+        for mercadoria in self.di_mercadoria_ids:
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = mercadoria.product_id
+                line_form.quantity = mercadoria.quantidade
+                line_form.price_unit = mercadoria.final_price_unit
+
+                # Campos adicionais relacionados aos impostos e operação fiscal
+                line_form.cfop_id = self.fiscal_operation_id.cfop_id
+                line_form.icms_origin = mercadoria.product_id.categ_id.icms_origin  # Origem ICMS
+                line_form.icms_base = (
+                        mercadoria.final_price_unit * mercadoria.quantidade)  # Base de cálculo do ICMS
+                line_form.icms_percent = self.fiscal_operation_id.icms_aliquota  # Alíquota ICMS
+                line_form.icms_value = (
+                        line_form.icms_base * line_form.icms_percent / 100)  # Valor do ICMS
+
+                # Adicionar PIS/COFINS/II/IPI
+                line_form.pis_id = mercadoria.product_id.categ_id.pis_id
+                line_form.pis_base = mercadoria.final_price_unit * mercadoria.quantidade
+                line_form.pis_percent = self.fiscal_operation_id.pis_aliquota
+                line_form.pis_value = line_form.pis_base * line_form.pis_percent / 100
+
+                line_form.cofins_id = mercadoria.product_id.categ_id.cofins_id
+                line_form.cofins_base = mercadoria.final_price_unit * mercadoria.quantidade
+                line_form.cofins_percent = self.fiscal_operation_id.cofins_aliquota
+                line_form.cofins_value = line_form.cofins_base * line_form.cofins_percent / 100
+
+                line_form.ii_id = mercadoria.product_id.categ_id.ii_id  # Imposto de importação
+                line_form.ii_value = (
+                        mercadoria.final_price_unit * self.fiscal_operation_id.ii_aliquota / 100)
+
+                line_form.ipi_id = mercadoria.product_id.categ_id.ipi_id  # Imposto sobre produtos industrializados
+                line_form.ipi_base = mercadoria.final_price_unit * mercadoria.quantidade
+                line_form.ipi_percent = self.fiscal_operation_id.ipi_aliquota
+                line_form.ipi_value = line_form.ipi_base * line_form.ipi_percent / 100
+
+                # Frete, seguro e outras despesas acessórias
+                line_form.freight_value = mercadoria.freight_value
+                line_form.insurance_value = mercadoria.insurance_value
+                line_form.other_value = mercadoria.other_value
+
+                # Unidade de medida
+                line_form.uom_id = mercadoria.product_id.uom_id
+
+        # Salvar a fatura
+        invoice = move_form.save()
+        return invoice
+
+
+    def _generate_invoice2(self):
         # Garantir que fiscal_operation_id está atribuído
         fiscal_operation_id = self.fiscal_operation_id.id if self.fiscal_operation_id else self._get_default_fiscal_operation_id()
 
