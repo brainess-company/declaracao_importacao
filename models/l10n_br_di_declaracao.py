@@ -521,13 +521,18 @@ class L10nBrDiDeclaracao(models.Model):
             mercadorias_filtradas = self.di_mercadoria_ids.filtered(
                 lambda m: m.product_id == move_line.product_id)
 
-            mercadoria = mercadorias_filtradas.first()
+            # Pegar a primeira mercadoria encontrada, se houver
+            mercadoria = mercadorias_filtradas[0] if mercadorias_filtradas else None
 
-            # Verificar se há mais de uma adição correspondente
-            adicoes_filtradas = self.di_adicao_ids.filtered(
-                lambda a: mercadoria in a.di_adicao_mercadoria_ids)
-            adicao = adicoes_filtradas.first()
-            # TERMINAR DE FERIFICAR
+            # Verificar se mercadoria foi encontrada
+            if not mercadoria:
+                raise ValueError("Nenhuma mercadoria correspondente foi encontrada.")
+
+            # Pegar a primeira adição correspondente à mercadoria
+            adicao = self.di_adicao_ids.filtered(
+                lambda a: mercadoria in a.di_adicao_mercadoria_ids)[0]
+            # TERMINAR DE VERIFICAR
+
             # Calcular o ICMS proporcional
             proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
@@ -547,7 +552,7 @@ class L10nBrDiDeclaracao(models.Model):
             # Calcular o valor total de impostos incluídos
             amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
             # Filtrar a mercadoria correspondente com base no product_id
-            
+
             # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
