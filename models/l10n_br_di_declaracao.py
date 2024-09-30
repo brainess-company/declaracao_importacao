@@ -419,33 +419,49 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("One or more import lines is missing a product ID."))
 
     def _generate_invoice(self):
-        # Criar o Form da fatura do fornecedor
-        move_form = Form(self.env["account.move"].with_context(default_move_type="in_invoice"))
+        # Criamos a fatura com o Form para garantir que todos os gatilhos sejam disparados
+        move_form = Form(
+            self.env["account.move"].with_context(
+                default_move_type="in_invoice",
+                account_predictive_bills_disable_prediction=True,
+                # Desabilitar o cálculo automático de impostos
+                force_company=self.env.company.id,
+                fiscal_tax_calculation_method="manual",
+            )
+        )
 
-        # Definir os campos obrigatórios
-        move_form.partner_id = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
+        # Definir as informações básicas da fatura
         move_form.invoice_date = fields.Date.today()
+        move_form.date = move_form.invoice_date
+        move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
+        move_form.issuer = "company"
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-        move_form.fiscal_operation_id = self.env['l10n_br_fiscal.operation'].search([], limit=1)
-        move_form.partner_shipping_id = move_form.partner_id  # Pode ser o mesmo parceiro de entrega
-        move_form.cfop_id = self.env['l10n_br_fiscal.cfop'].search([], limit=1)
 
-        # Adicionar linhas da fatura com produto e impostos
-        for product in self.env['product.product'].search([],
-                                                          limit=2):  # Suponha que você tenha produtos cadastrados
+        move_form.fiscal_operation_id = self.fiscal_operation_id  # Compras
+
+        # Calcular a quantidade total para uso no cálculo do ICMS
+        total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
+        total_icms = float(self.valor_total_icms)
+
+        # Adicionar as linhas de fatura (produtos/serviços)
+        for line in self.invoice_line_ids:
             with move_form.invoice_line_ids.new() as line_form:
-                line_form.product_id = product
-                line_form.quantity = 5  # Quantidade fictícia
-                line_form.price_unit = product.list_price  # Preço fictício
-                line_form.tax_ids.clear()  # Limpar os impostos padrões
-                line_form.tax_ids.add(
-                    self.env['account.tax'].search([('type_tax_use', '=', 'purchase')], limit=1))
+                line_form.product_id = line.product_id  # Produto/Serviço
+                line_form.quantity = line.quantity  # Quantidade
+                line_form.price_unit = line.price_unit  # Preço unitário
+                line_form.account_id = line.account_id  # Conta contábil
+                line_form.name = line.name  # Descrição da linha
 
-        # Salvar a fatura
+                # Informações fiscais por linha
+                line_form.tax_ids.clear()  # Limpar impostos predefinidos
+                for tax in line.tax_ids:
+                    line_form.tax_ids.add(tax)  # Adicionar os impostos correspondentes
+                line_form.fiscal_operation_line_id = line.fiscal_operation_line_id  # Operação fiscal por linha
+                line_form.cfop_id = line.cfop_id  # CFOP
+
+        # Salvar a fatura de fornecedor
         invoice = move_form.save()
-
-        return invoice
 
     def _get_invoice_action(self, invoice):
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]

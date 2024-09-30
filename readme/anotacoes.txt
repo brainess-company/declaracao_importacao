@@ -45,3 +45,8 @@ account_move.is_cnab = False SETAR COMO FALSE
 
 ERRO
 The product False must have a default code or the product codeline field (nfe40_cProd) should be filled.
+
+
+fiscal_operation_id = compras
+issuer = company
+serie do documento

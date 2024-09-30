@@ -438,7 +438,7 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
         move_form.issuer = "company"
-        move_form.fiscal_operation_id = self.fiscal_operation_id
+        move_form.fiscal_operation_id = self.fiscal_operation_id # compras
 
         # Calcular a quantidade total para uso no cálculo do ICMS
         total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
