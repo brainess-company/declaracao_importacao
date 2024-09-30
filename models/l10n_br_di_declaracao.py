@@ -513,7 +513,12 @@ class L10nBrDiDeclaracao(models.Model):
         invoice.write({'fiscal_document_id': fiscal_document.id})
 
         # Recuperar as linhas de account.move.line relacionadas ao invoice
-        account_move_lines = self.env['account.move.line'].search([('move_id', '=', invoice.id)])
+        # Recuperar as linhas de account.move.line relacionadas ao invoice e que não estão excluídas da aba de fatura
+        account_move_lines = self.env['account.move.line'].search([
+            ('move_id', '=', invoice.id),
+            ('exclude_from_invoice_tab', '=', False)
+            # Adiciona a condição para excluir as linhas marcadas como True
+        ])
 
         # Criar ou atualizar as linhas de fiscal_document_line associadas às linhas de conta
         for move_line in account_move_lines:
