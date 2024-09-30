@@ -444,24 +444,48 @@ class L10nBrDiDeclaracao(models.Model):
         total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
         total_icms = float(self.valor_total_icms)
 
-        # Adicionar as linhas de fatura (produtos/serviços)
-        for line in self.invoice_line_ids:
+        # Adicionar as linhas do produto
+        for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
-                line_form.product_id = line.product_id  # Produto/Serviço
-                line_form.quantity = line.quantity  # Quantidade
-                line_form.price_unit = line.price_unit  # Preço unitário
-                line_form.account_id = line.account_id  # Conta contábil
-                line_form.name = line.name  # Descrição da linha
+                # Obter a adição correspondente à mercadoria
+                adicao = self.di_adicao_ids.filtered(
+                    lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
 
-                # Informações fiscais por linha
-                line_form.tax_ids.clear()  # Limpar impostos predefinidos
-                for tax in line.tax_ids:
-                    line_form.tax_ids.add(tax)  # Adicionar os impostos correspondentes
-                line_form.fiscal_operation_line_id = line.fiscal_operation_line_id  # Operação fiscal por linha
-                line_form.cfop_id = line.cfop_id  # CFOP
+                # Calcular o ICMS proporcional
+                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
-        # Salvar a fatura de fornecedor
+                # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+                cofins_value = adicao.cofins_aliquota_valor_devido / 100
+                ii_value = adicao.ii_aliquota_valor_devido / 100
+                ipi_value = adicao.ipi_aliquota_valor_devido / 100
+                freight_value = adicao.frete_valor_reais
+                other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+
+                # Calcular o valor total de impostos incluídos
+                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+
+                # Calcular o preço unitário completo (valor unitário + frete proporcional + impostos)
+                price_unit_full = (
+                    mercadoria.final_price_unit +  # Valor unitário original
+                    (freight_value / mercadoria.quantidade) +  # Frete proporcional
+                    (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
+                    (amount_tax_included / mercadoria.quantidade)  # Impostos incluídos
+                )
+
+                # Atribuir o valor completo ao price_unit da linha
+                line_form.product_id = mercadoria.product_id
+                line_form.quantity = mercadoria.quantidade
+                line_form.price_unit = price_unit_full  # Valor completo do produto
+
+        # Salvar a fatura e obter a referência
         invoice = move_form.save()
+        # Atualizar o estado do documento para "locked"
+        self.write({"account_move_id": invoice.id, "state": "locked"})
+
+        # Retornar a ação para exibir a fatura gerada
+        action = self.env.ref("account.action_move_in_invoice_type").read()[0]
+        action["domain"] = [("id", "=", invoice.id)]
 
     def _get_invoice_action(self, invoice):
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
