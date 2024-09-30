@@ -639,12 +639,12 @@ class L10nBrDiDeclaracao(models.Model):
                     # TODO: 'cfop_id': self.fiscal_operation_id.cfop_id.id if self.fiscal_operation_id.cfop_id else None,
                     'uot_id': product.product_tmpl_id.uom_id.id if product.product_tmpl_id.uom_id else None,
                     'fiscal_genre_id': product.product_tmpl_id.fiscal_genre_id.id if product.product_tmpl_id.fiscal_genre_id else None,
-                    'ipi_tax_id': product.product_tmpl_id.ncm_id.l10n_br_fiscal_ncm.tax_ipi_id.id if product.product_tmpl_id.ncm_id.l10n_br_fiscal_ncm.tax_ipi_id else None,
-                    'ii_tax_id': product.product_tmpl_id.ncm_id.l10n_br_fiscal_ncm.tax_ii_id.id if product.product_tmpl_id.ncm_id.l10n_br_fiscal_ncm.tax_ii_id else None,
+                    'ipi_tax_id': product.product_tmpl_id.ncm_id.tax_ipi_id.id if product.product_tmpl_id.ncm_id.tax_ipi_id else None,
+                    'ii_tax_id': product.product_tmpl_id.ncm_id.tax_ii_id.id if product.product_tmpl_id.ncm_id.tax_ii_id else None,
 
-                    'icms_cst_id': product.icms_cst_id.id if product.icms_cst_id else None,
-                    'cofins_tax_id': product.cofins_tax_id.id if product.cofins_tax_id else None,
-                    'pis_tax_id': product.pis_tax_id.id if product.pis_tax_id else None,
+                    'icms_cst_id': product.product_tmpl_id.ncm_id.icms_cst_id.id if product.product_tmpl_id.ncm_id.icms_cst_id else None,
+                    'cofins_tax_id': product.product_tmpl_id.ncm_id.cofins_tax_id.id if product.product_tmpl_id.ncm_id.cofins_tax_id else None,
+                    'pis_tax_id': product.product_tmpl_id.ncm_id.pis_tax_id.id if product.product_tmpl_id.ncm_id.pis_tax_id else None,
                 })
 
     # Finalizar a fatura e atualizar o estado
