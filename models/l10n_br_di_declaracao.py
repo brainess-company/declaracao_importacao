@@ -477,6 +477,8 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = price_unit_full  # Valor completo do produto
+                # Adicionar o valor do frete na linha da fatura
+                line_form.freight_value = freight_value  # Preenchendo o campo de frete aqui
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
@@ -486,6 +488,8 @@ class L10nBrDiDeclaracao(models.Model):
         # Retornar a ação para exibir a fatura gerada
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
         action["domain"] = [("id", "=", invoice.id)]
+
+        return action
 
     def _get_invoice_action(self, invoice):
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
