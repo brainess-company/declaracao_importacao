@@ -521,20 +521,33 @@ class L10nBrDiDeclaracao(models.Model):
             mercadorias_filtradas = self.di_mercadoria_ids.filtered(
                 lambda m: m.product_id == move_line.product_id)
 
-            if len(mercadorias_filtradas) > 1:
-                raise ValueError("Mais de uma mercadoria encontrada para o product_id.")
-
-            mercadoria = mercadorias_filtradas.ensure_one()
+            mercadoria = mercadorias_filtradas.first()
 
             # Verificar se há mais de uma adição correspondente
             adicoes_filtradas = self.di_adicao_ids.filtered(
                 lambda a: mercadoria in a.di_adicao_mercadoria_ids)
-
-            if len(adicoes_filtradas) > 1:
-                raise ValueError("Mais de uma adição encontrada para a mercadoria.")
-
-            adicao = adicoes_filtradas.ensure_one()
+            adicao = adicoes_filtradas.first()
             # TERMINAR DE FERIFICAR
+            # Calcular o ICMS proporcional
+            proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
+
+            # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+            pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem / 100
+            pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
+            cofins_value = adicao.cofins_aliquota_valor_devido / 100
+            cofins_aliquota = adicao.cofins_aliquota_ad_valorem / 100
+            ii_aliquota = adicao.ii_aliquota_ad_valorem / 100
+            ii_value = adicao.ii_aliquota_valor_devido / 100
+            ipi_aliquota = adicao.ipi_aliquota_ad_valorem / 100
+            ipi_value = adicao.ipi_aliquota_valor_devido / 100
+            freight_value = adicao.frete_valor_reais
+            other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+            produto_cfrete = (mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
+
+            # Calcular o valor total de impostos incluídos
+            amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+            # Filtrar a mercadoria correspondente com base no product_id
+            
             # Criar a linha do documento fiscal com os valores especificados
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
