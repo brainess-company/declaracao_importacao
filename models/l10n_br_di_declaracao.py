@@ -530,7 +530,7 @@ class L10nBrDiDeclaracao(models.Model):
             product = self.env['product.product'].browse(move_line.product_id.id)
             default_code = product.product_tmpl_id.default_code or ''
             # cfop_code = self.fiscal_operation_id.cfop_id.code if self.fiscal_operation_id.cfop_id else '5102'  # Exemplo de CFOP
-            cfop_code = '5102'
+            cfop_code = 290
 
             fiscal_document_line = self.env['l10n_br_fiscal.document.line'].create({
                 'document_id': fiscal_document.id,
