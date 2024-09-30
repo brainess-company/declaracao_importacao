@@ -434,7 +434,6 @@ class L10nBrDiDeclaracao(models.Model):
 
         return cst_mapping.get(regime_tributario, {}).get(aliquota, '60')  # Retorna 00 por padrão
 
-    from odoo.tests.common import Form
 
     def _generate_invoice(self):
         # Criar a fatura com o Form para garantir que todos os gatilhos sejam disparados
