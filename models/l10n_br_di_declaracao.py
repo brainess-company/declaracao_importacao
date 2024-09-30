@@ -552,6 +552,9 @@ class L10nBrDiDeclaracao(models.Model):
             # Atualizar a linha de account.move.line com o campo fiscal_document_line_id
             move_line.write({'fiscal_document_line_id': fiscal_document_line.id})
 
+        # Forçar o valor correto de ind_final após a criação do documento fiscal
+        fiscal_document.write({'ind_final': 0})
+
         # NOVO TRECHO DO CODIGO
         # Para cada mercadoria, associar o frete correto à linha fiscal
         for mercadoria in self.di_mercadoria_ids:
