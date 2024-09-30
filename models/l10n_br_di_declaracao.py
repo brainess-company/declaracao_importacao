@@ -437,9 +437,10 @@ class L10nBrDiDeclaracao(models.Model):
     # Busca os impostos configurados no produto
     def _get_product_taxes(self, product, fiscal_operation_id):
         taxes = product.supplier_taxes_id.filtered(lambda tax: tax.company_id == self.env.company)
-        if fiscal_operation_id:
-            # Se houver uma operação fiscal definida, recuperar a regra fiscal correspondente
-            taxes = fiscal_operation_id.apply_tax_rules(product, taxes)
+
+        # Se houver uma operação fiscal, pode haver regras específicas a aplicar aqui
+        # Por exemplo, adicionar ou filtrar impostos com base em categorias fiscais
+
         return taxes
 
 
