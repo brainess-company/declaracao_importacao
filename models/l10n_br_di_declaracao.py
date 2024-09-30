@@ -527,6 +527,9 @@ class L10nBrDiDeclaracao(models.Model):
                 'quantity': move_line.quantity,
                 'price_unit': move_line.price_unit,
                 'nfe40_cProd': default_code,
+                'fiscal_operation_id': self.fiscal_operation_id.id,
+                'cfop_id': self.fiscal_operation_id.cfop_id.id,
+                'nfe40_NCM': product.product_tmpl_id.ncm_id.code,
                 # Preencher o código do produto (cProd) com default_code
                 'nfe40_choice_icms': 'nfe40_ICMSSN101',
                 'nfe40_choice_tipi': 'nfe40_IPINT',
