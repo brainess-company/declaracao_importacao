@@ -511,6 +511,9 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Atualizar o campo fiscal_document_id na fatura
         invoice.write({'fiscal_document_id': fiscal_document.id})
+        # Forçar o valor correto de ind_final após a criação do documento fiscal
+        fiscal_document.write({'ind_final': 0})
+
 
         # Recuperar as linhas de account.move.line relacionadas ao invoice
         # Recuperar as linhas de account.move.line relacionadas ao invoice e que não estão excluídas da aba de fatura
