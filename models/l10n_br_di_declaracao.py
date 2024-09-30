@@ -434,14 +434,15 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = mercadoria.final_price_unit
 
-                # Verificar se a operação fiscal tem linhas associadas e recuperar o CFOP de lá
-                if self.fiscal_operation_id and self.fiscal_operation_id.fiscal_operation_line_ids:
-                    cfop_line = self.fiscal_operation_id.fiscal_operation_line_ids.filtered(
-                        lambda line: line.product_id == mercadoria.product_id).ensure_one()
+                # Busca o CFOP associado ao produto ou configuração fiscal
+                product = mercadoria.product_id
+                cfop_id = product.product_tmpl_id.fiscal_operation_id.cfop_id.id if product.product_tmpl_id.fiscal_operation_id else None
 
-                    line_form.cfop_id = cfop_line.cfop_id
-                else:
-                    line_form.cfop_id = None  # Caso não tenha CFOP, defina um valor padrão ou tratamento adequado
+                # Se o CFOP estiver vazio, busque o CFOP de uma operação fiscal padrão
+                if not cfop_id and self.fiscal_operation_id:
+                    cfop_id = self.fiscal_operation_id.cfop_id.id if self.fiscal_operation_id.cfop_id else None
+
+                line_form.cfop_id = cfop_id
 
         # Salvar a fatura
         invoice = move_form.save()
