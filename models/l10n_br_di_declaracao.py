@@ -422,30 +422,39 @@ class L10nBrDiDeclaracao(models.Model):
         # Criar a fatura com o Form para garantir que todos os gatilhos sejam disparados
         move_form = Form(self.env["account.move"].with_context(default_move_type="in_invoice"))
 
+        # Definir informações básicas da fatura
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
         move_form.invoice_date = fields.Date.today()
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.fiscal_operation_id = self.fiscal_operation_id
+        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
 
-        # Adicionar as linhas da fatura
+        # Adicionar as linhas da fatura com campos fiscais
         for mercadoria in self.di_mercadoria_ids:
             with move_form.invoice_line_ids.new() as line_form:
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
                 line_form.price_unit = mercadoria.final_price_unit
 
-                # Busca o CFOP associado ao produto ou configuração fiscal
-                product = mercadoria.product_id
-                cfop_id = product.product_tmpl_id.fiscal_operation_id.cfop_id.id if product.product_tmpl_id.fiscal_operation_id else None
+                # Recuperar e definir impostos diretamente do produto e NCM
+                fiscal_position = self.env['account.fiscal.position'].get_fiscal_position(
+                    move_form.partner_id.id, mercadoria.product_id.id, self.fiscal_operation_id)
 
-                # Se o CFOP estiver vazio, busque o CFOP de uma operação fiscal padrão
-                if not cfop_id and self.fiscal_operation_id:
-                    cfop_id = self.fiscal_operation_id.cfop_id.id if self.fiscal_operation_id.cfop_id else None
+                # Atribuir os impostos à linha
+                line_form.tax_ids.clear()  # Limpar os impostos predefinidos
+                line_form.tax_ids.add(
+                    fiscal_position.tax_id)  # Adicionar impostos da posição fiscal
 
-                line_form.cfop_id = cfop_id
+                # Definir o CFOP, NCM e demais campos fiscais
+                line_form.cfop_id = self.fiscal_operation_id.cfop_id  # Se aplicável
+                line_form.ncm_id = mercadoria.product_id.product_tmpl_id.ncm_id
+                line_form.icms_cst_id = self.fiscal_operation_id.icms_cst_id  # CST ICMS
+                line_form.pis_cst_id = self.fiscal_operation_id.pis_cst_id  # CST PIS
+                line_form.cofins_cst_id = self.fiscal_operation_id.cofins_cst_id  # CST COFINS
 
         # Salvar a fatura
         invoice = move_form.save()
+
         return invoice
 
     def _get_invoice_action(self, invoice):
