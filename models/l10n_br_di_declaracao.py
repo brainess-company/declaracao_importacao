@@ -419,45 +419,33 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("One or more import lines is missing a product ID."))
 
     def _generate_invoice(self):
-        # Criar a fatura de fornecedor no Form com contexto específico
+        # Criar o Form da fatura do fornecedor
         move_form = Form(self.env["account.move"].with_context(default_move_type="in_invoice"))
 
-        # Definir os campos principais
-        move_form.partner_id = self.partner_id  # Parceiro fornecedor
-        move_form.invoice_date = fields.Date.today()  # Data da fatura
-        move_form.date = fields.Date.today()  # Data de lançamento
-        move_form.ref = self.name  # Referência interna
+        # Definir os campos obrigatórios
+        move_form.partner_id = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
+        move_form.invoice_date = fields.Date.today()
+        move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
+        move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
+        move_form.fiscal_operation_id = self.env['l10n_br_fiscal.operation'].search([], limit=1)
+        move_form.partner_shipping_id = move_form.partner_id  # Pode ser o mesmo parceiro de entrega
+        move_form.cfop_id = self.env['l10n_br_fiscal.cfop'].search([], limit=1)
 
-        # Informações fiscais
-        move_form.fiscal_operation_id = self.fiscal_operation_id  # Operação fiscal
-        move_form.document_type_id = self.env.ref(
-            "l10n_br_fiscal.document_55")  # Tipo de documento (NF-e)
-        move_form.document_serie_id = self.env.ref(
-            "l10n_br_fiscal.document_55_serie_1")  # Série do documento
-        move_form.fiscal_position_id = self.fiscal_position_id  # Posição fiscal do fornecedor
-
-        # Outras informações
-        move_form.currency_id = self.env.user.company_id.currency_id  # Moeda
-        move_form.company_id = self.env.user.company_id  # Empresa atual
-
-        # Adicionar as linhas de fatura (produtos/serviços)
-        for line in self.invoice_line_ids:
+        # Adicionar linhas da fatura com produto e impostos
+        for product in self.env['product.product'].search([],
+                                                          limit=2):  # Suponha que você tenha produtos cadastrados
             with move_form.invoice_line_ids.new() as line_form:
-                line_form.product_id = line.product_id  # Produto/Serviço
-                line_form.quantity = line.quantity  # Quantidade
-                line_form.price_unit = line.price_unit  # Preço unitário
-                line_form.account_id = line.account_id  # Conta contábil
-                line_form.name = line.name  # Descrição da linha
+                line_form.product_id = product
+                line_form.quantity = 5  # Quantidade fictícia
+                line_form.price_unit = product.list_price  # Preço fictício
+                line_form.tax_ids.clear()  # Limpar os impostos padrões
+                line_form.tax_ids.add(
+                    self.env['account.tax'].search([('type_tax_use', '=', 'purchase')], limit=1))
 
-                # Informações fiscais por linha
-                line_form.tax_ids.clear()  # Limpar impostos predefinidos
-                for tax in line.tax_ids:
-                    line_form.tax_ids.add(tax)  # Adicionar os impostos correspondentes
-                line_form.fiscal_operation_line_id = line.fiscal_operation_line_id  # Operação fiscal por linha
-                line_form.cfop_id = line.cfop_id  # CFOP
-
-        # Salvar a fatura de fornecedor
+        # Salvar a fatura
         invoice = move_form.save()
+
+        return invoice
 
     def _get_invoice_action(self, invoice):
         action = self.env.ref("account.action_move_in_invoice_type").read()[0]
