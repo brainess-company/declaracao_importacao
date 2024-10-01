@@ -423,10 +423,10 @@ class L10nBrDiDeclaracao(models.Model):
         move_form = Form(
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",
-                account_predictive_bills_disable_prediction=True,
+                # account_predictive_bills_disable_prediction=True,
                 # Desabilitar o cálculo automático de impostos
                 force_company=self.env.company.id,
-                fiscal_tax_calculation_method="manual",
+                # fiscal_tax_calculation_method="manual",
             )
         )
 
@@ -437,12 +437,7 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.issuer = "company"
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-
         move_form.fiscal_operation_id = self.fiscal_operation_id  # Compras
-
-        # Calcular a quantidade total para uso no cálculo do ICMS
-        total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
-        total_icms = float(self.valor_total_icms)
 
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
@@ -451,49 +446,42 @@ class L10nBrDiDeclaracao(models.Model):
                 adicao = self.di_adicao_ids.filtered(
                     lambda a: mercadoria in a.di_adicao_mercadoria_ids).ensure_one()
 
-                # Calcular o ICMS proporcional
-                proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
-
                 # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
                 pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem / 100
-                pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
-                cofins_value = adicao.cofins_aliquota_valor_devido / 100
                 cofins_aliquota = adicao.cofins_aliquota_ad_valorem / 100
                 ii_aliquota = adicao.ii_aliquota_ad_valorem / 100
-                ii_value = adicao.ii_aliquota_valor_devido / 100
                 ipi_aliquota = adicao.ipi_aliquota_ad_valorem / 100
-                ipi_value = adicao.ipi_aliquota_valor_devido / 100
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
-                produto_cfrete = (
-                                         mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
 
-                # Calcular o valor total de impostos incluídos
-                amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
-                # Filtrar a mercadoria correspondente com base no product_id
-
-                # Calcular o preço unitário completo (valor unitário + frete proporcional + impostos)
-                price_unit_full = (
-                    mercadoria.final_price_unit +  # Valor unitário original
-                    (freight_value / mercadoria.quantidade) +  # Frete proporcional
-                    (other_value / mercadoria.quantidade) +  # Outros valores proporcionais
-                    (amount_tax_included / mercadoria.quantidade)  # Impostos incluídos
+                # Pesquisar os impostos pela alíquota e domínio
+                ipi_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                    [('percent_amount', '=', ipi_aliquota), ('tax_domain', '=', 'ipi')], limit=1
+                )
+                pis_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                    [('percent_amount', '=', pis_pasep_aliquota), ('tax_domain', '=', 'pis')],
+                    limit=1
+                )
+                cofins_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                    [('percent_amount', '=', cofins_aliquota), ('tax_domain', '=', 'cofins')],
+                    limit=1
+                )
+                ii_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                    [('percent_amount', '=', ii_aliquota), ('tax_domain', '=', 'ii')], limit=1
                 )
 
-                # Atribuir o valor completo ao price_unit da linha
+                # Preencher os campos do form
                 line_form.product_id = mercadoria.product_id
                 line_form.quantity = mercadoria.quantidade
-                line_form.price_unit = price_unit_full  # Valor completo do produto
-                # Adicionar o valor do frete na linha da fatura
-                line_form.freight_value = freight_value  # Preenchendo o campo de frete aqui
-                line_form.icms_value = proportional_icms
-                #line_form.ipi_value = ipi_value
-                #line_form.pis_value = pis_value
-                #line_form.cofins_value = cofins_value
-                #line_form.ii_value = ii_value
-                line_form.ipi_base = produto_cfrete + ii_value,
-                line_form.ipi_percent = ipi_aliquota,
-                line_form.estimate_tax = amount_tax_included
+                line_form.price_unit = mercadoria.final_price_unit  # Valor completo do produto
+                line_form.freight_value = freight_value  # Preenchendo o campo de frete
+                line_form.other_value = other_value
+
+                # Atribuindo os impostos encontrados
+                line_form.ipi_tax_id = ipi_tax_id.id if ipi_tax_id else None
+                line_form.pis_tax_id = pis_tax_id.id if pis_tax_id else None
+                line_form.cofins_tax_id = cofins_tax_id.id if cofins_tax_id else None
+                line_form.ii_tax_id = ii_tax_id.id if ii_tax_id else None
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
