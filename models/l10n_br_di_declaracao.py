@@ -455,15 +455,22 @@ class L10nBrDiDeclaracao(models.Model):
                 proportional_icms = ((mercadoria.quantidade / total_quantity) * total_icms) / 100
 
                 # Obter os valores de PIS, COFINS, II, IPI e frete diretamente da adição
+                pis_pasep_aliquota = adicao.pis_pasep_aliquota_ad_valorem / 100
                 pis_value = adicao.pis_pasep_aliquota_valor_devido / 100
                 cofins_value = adicao.cofins_aliquota_valor_devido / 100
+                cofins_aliquota = adicao.cofins_aliquota_ad_valorem / 100
+                ii_aliquota = adicao.ii_aliquota_ad_valorem / 100
                 ii_value = adicao.ii_aliquota_valor_devido / 100
+                ipi_aliquota = adicao.ipi_aliquota_ad_valorem / 100
                 ipi_value = adicao.ipi_aliquota_valor_devido / 100
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
+                produto_cfrete = (
+                                         mercadoria.quantidade * mercadoria.final_price_unit) + freight_value
 
                 # Calcular o valor total de impostos incluídos
                 amount_tax_included = pis_value + cofins_value + ii_value + ipi_value + proportional_icms
+                # Filtrar a mercadoria correspondente com base no product_id
 
                 # Calcular o preço unitário completo (valor unitário + frete proporcional + impostos)
                 price_unit_full = (
@@ -479,6 +486,12 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.price_unit = price_unit_full  # Valor completo do produto
                 # Adicionar o valor do frete na linha da fatura
                 line_form.freight_value = freight_value  # Preenchendo o campo de frete aqui
+                line_form.icms_value = proportional_icms
+                line_form.ipi_value = ipi_value
+                line_form.pis_value = pis_value
+                line_form.cofins_value = cofins_value
+                line_form.ii_value = ii_value
+                line_form.estimate_tax = amount_tax_included
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
