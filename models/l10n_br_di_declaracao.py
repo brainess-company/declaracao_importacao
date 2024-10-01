@@ -2,10 +2,8 @@
 # Copyright 2024 KMEE
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 import base64
-from pytz import timezone
 from datetime import datetime
 from odoo.fields import Date
-
 from xsdata.formats.dataclass.parsers import XmlParser
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -422,35 +420,21 @@ class L10nBrDiDeclaracao(models.Model):
 
     def _generate_invoice(self):
         # Ajustar a data para o fuso horário de São Paulo
-        brasil_tz = timezone('America/Sao_Paulo')
-        now_in_brazil = datetime.now(brasil_tz)
-        today_brazil = now_in_brazil.date()
-        # Criamos a fatura com o Form para garantir que todos os gatilhos sejam disparados
         move_form = Form(
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",
-                account_predictive_bills_disable_prediction=True,
-                # Desabilitar o cálculo automático de impostos
                 force_company=self.env.company.id,
-                fiscal_tax_calculation_method="manual",
             )
         )
 
         # Definir as informações básicas da fatura
-        # move_form.invoice_date = Date.to_string(today_brazil)
-        # move_form.date = move_form.invoice_date
         move_form.invoice_date = fields.Date.today()
         move_form.date = move_form.invoice_date
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.issuer = "company"
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
-
         move_form.fiscal_operation_id = self.fiscal_operation_id  # Compras
-
-        # Calcular a quantidade total para uso no cálculo do ICMS
-        total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
-        total_icms = float(self.valor_total_icms)
 
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
@@ -498,6 +482,9 @@ class L10nBrDiDeclaracao(models.Model):
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
+
+        # Chamar o método para recalcular os totais e os impostos da fatura
+        invoice._recompute_dynamic_lines(recompute_tax_base_amount=True)
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
