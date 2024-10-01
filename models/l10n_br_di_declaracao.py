@@ -423,10 +423,10 @@ class L10nBrDiDeclaracao(models.Model):
         move_form = Form(
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",
-                # account_predictive_bills_disable_prediction=True,
+                #account_predictive_bills_disable_prediction=True,
                 # Desabilitar o cálculo automático de impostos
                 force_company=self.env.company.id,
-                # fiscal_tax_calculation_method="manual",
+                #fiscal_tax_calculation_method="manual",
             )
         )
 
@@ -437,7 +437,12 @@ class L10nBrDiDeclaracao(models.Model):
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.issuer = "company"
         move_form.document_serie_id = self.env.ref("l10n_br_fiscal.document_55_serie_1")
+
         move_form.fiscal_operation_id = self.fiscal_operation_id  # Compras
+
+        # Calcular a quantidade total para uso no cálculo do ICMS
+        total_quantity = sum(mercadoria.quantidade for mercadoria in self.di_mercadoria_ids)
+        total_icms = float(self.valor_total_icms)
 
         # Adicionar as linhas do produto
         for mercadoria in self.di_mercadoria_ids:
@@ -454,19 +459,19 @@ class L10nBrDiDeclaracao(models.Model):
                 freight_value = adicao.frete_valor_reais
                 other_value = sum(valor.valor for valor in adicao.di_adicao_valor_ids if valor)
 
-                # Pesquisar os impostos pela alíquota e domínio
-                ipi_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                # Buscar os impostos de acordo com a alíquota e domínio
+                ipi_tax = self.env['l10n_br_fiscal.tax'].search(
                     [('percent_amount', '=', ipi_aliquota), ('tax_domain', '=', 'ipi')], limit=1
                 )
-                pis_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                pis_tax = self.env['l10n_br_fiscal.tax'].search(
                     [('percent_amount', '=', pis_pasep_aliquota), ('tax_domain', '=', 'pis')],
                     limit=1
                 )
-                cofins_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                cofins_tax = self.env['l10n_br_fiscal.tax'].search(
                     [('percent_amount', '=', cofins_aliquota), ('tax_domain', '=', 'cofins')],
                     limit=1
                 )
-                ii_tax_id = self.env['l10n_br_fiscal.tax'].search(
+                ii_tax = self.env['l10n_br_fiscal.tax'].search(
                     [('percent_amount', '=', ii_aliquota), ('tax_domain', '=', 'ii')], limit=1
                 )
 
@@ -477,11 +482,11 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.freight_value = freight_value  # Preenchendo o campo de frete
                 line_form.other_value = other_value
 
-                # Atribuindo os impostos encontrados
-                line_form.ipi_tax_id = ipi_tax_id.id if ipi_tax_id else None
-                line_form.pis_tax_id = pis_tax_id.id if pis_tax_id else None
-                line_form.cofins_tax_id = cofins_tax_id.id if cofins_tax_id else None
-                line_form.ii_tax_id = ii_tax_id.id if ii_tax_id else None
+                # Atribuir os impostos encontrados (os próprios registros, não os IDs)
+                line_form.ipi_tax_id = ipi_tax if ipi_tax else None
+                line_form.pis_tax_id = pis_tax if pis_tax else None
+                line_form.cofins_tax_id = cofins_tax if cofins_tax else None
+                line_form.ii_tax_id = ii_tax if ii_tax else None
 
         # Salvar a fatura e obter a referência
         invoice = move_form.save()
