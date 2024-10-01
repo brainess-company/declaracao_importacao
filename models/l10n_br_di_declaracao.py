@@ -429,18 +429,18 @@ class L10nBrDiDeclaracao(models.Model):
         move_form = Form(
             self.env["account.move"].with_context(
                 default_move_type="in_invoice",
-                #account_predictive_bills_disable_prediction=True,
+                account_predictive_bills_disable_prediction=True,
                 # Desabilitar o cálculo automático de impostos
                 force_company=self.env.company.id,
-                #fiscal_tax_calculation_method="manual",
+                fiscal_tax_calculation_method="manual",
             )
         )
 
         # Definir as informações básicas da fatura
-        move_form.invoice_date = Date.to_string(today_brazil)
-        move_form.date = move_form.invoice_date
-        #move_form.invoice_date = fields.Date.today()
+        # move_form.invoice_date = Date.to_string(today_brazil)
         # move_form.date = move_form.invoice_date
+        move_form.invoice_date = fields.Date.today()
+        move_form.date = move_form.invoice_date
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.issuer = "company"
@@ -497,14 +497,7 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.ii_tax_id = ii_tax if ii_tax else None
 
         # Salvar a fatura e obter a referência
-        # Logar as datas antes de criar o documento fiscal
-        _logger.info(
-                f"Data da fatura: {move_form.invoice_date}, Data contábil: {move_form.date}")
-
         invoice = move_form.save()
-        # Logar as informações da fatura
-        _logger.info(
-            f"Fatura criada com ID: {invoice.id}, Data da Fatura: {invoice.invoice_date}, Data Contábil: {invoice.date}")
 
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
