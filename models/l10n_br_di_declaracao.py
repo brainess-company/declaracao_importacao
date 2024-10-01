@@ -497,7 +497,15 @@ class L10nBrDiDeclaracao(models.Model):
                 line_form.ii_tax_id = ii_tax if ii_tax else None
 
         # Salvar a fatura e obter a referência
+        # Logar as datas antes de criar o documento fiscal
+        _logger.info(
+                f"Data da fatura: {move_form.invoice_date}, Data contábil: {move_form.date}")
+
         invoice = move_form.save()
+        # Logar as informações da fatura
+        _logger.info(
+            f"Fatura criada com ID: {invoice.id}, Data da Fatura: {invoice.invoice_date}, Data Contábil: {invoice.date}")
+
         # Atualizar o estado do documento para "locked"
         self.write({"account_move_id": invoice.id, "state": "locked"})
 
