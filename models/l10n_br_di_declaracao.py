@@ -2,7 +2,9 @@
 # Copyright 2024 KMEE
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 import base64
+from pytz import timezone
 from datetime import datetime
+from odoo.fields import Date
 
 from xsdata.formats.dataclass.parsers import XmlParser
 from odoo import _, api, fields, models
@@ -419,6 +421,10 @@ class L10nBrDiDeclaracao(models.Model):
             raise UserError(_("One or more import lines is missing a product ID."))
 
     def _generate_invoice(self):
+        # Ajustar a data para o fuso horário de São Paulo
+        brasil_tz = timezone('America/Sao_Paulo')
+        now_in_brazil = datetime.now(brasil_tz)
+        today_brazil = now_in_brazil.date()
         # Criamos a fatura com o Form para garantir que todos os gatilhos sejam disparados
         move_form = Form(
             self.env["account.move"].with_context(
@@ -431,8 +437,10 @@ class L10nBrDiDeclaracao(models.Model):
         )
 
         # Definir as informações básicas da fatura
-        move_form.invoice_date = fields.Date.today()
+        move_form.invoice_date = Date.to_string(today_brazil)
         move_form.date = move_form.invoice_date
+        #move_form.invoice_date = fields.Date.today()
+        # move_form.date = move_form.invoice_date
         move_form.partner_id = self.di_adicao_ids[0].fornecedor_partner_id
         move_form.document_type_id = self.env.ref("l10n_br_fiscal.document_55")
         move_form.issuer = "company"
