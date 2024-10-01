@@ -487,10 +487,12 @@ class L10nBrDiDeclaracao(models.Model):
                 # Adicionar o valor do frete na linha da fatura
                 line_form.freight_value = freight_value  # Preenchendo o campo de frete aqui
                 line_form.icms_value = proportional_icms
-                line_form.ipi_value = ipi_value
-                line_form.pis_value = pis_value
-                line_form.cofins_value = cofins_value
-                line_form.ii_value = ii_value
+                #line_form.ipi_value = ipi_value
+                #line_form.pis_value = pis_value
+                #line_form.cofins_value = cofins_value
+                #line_form.ii_value = ii_value
+                line_form.ipi_base = produto_cfrete + ii_value,
+                line_form.ipi_percent = ipi_aliquota,
                 line_form.estimate_tax = amount_tax_included
 
         # Salvar a fatura e obter a referência
